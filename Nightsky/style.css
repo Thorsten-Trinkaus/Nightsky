@@ -1,0 +1,33 @@
+body
+{
+    margin: 20px;
+    overflow: hidden;
+    background-color: 	#457b9d;
+}
+#d1
+{
+    z-index: 2;
+    position:fixed;
+    bottom: 20px;
+    background-color:#457b9d98;
+    width: max-content;
+
+}
+text{
+    color: #f4a261;
+}
+div
+{
+    margin: 20px;
+    display: inline-block;
+    color: #e9c46a;
+    font: small-caps bold 20px/1 sans-serif;
+    text-align: left;
+    text-overflow: clip;
+    text-shadow: #e76f51 2px 2px;
+}
+canvas
+{
+    z-index: 1;
+    position: absolute;
+}
