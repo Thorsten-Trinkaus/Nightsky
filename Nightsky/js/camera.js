@@ -58,7 +58,8 @@ class Camera {
   }
 
   //calculate the viewMatrix for the camera
-  getViewMat(out) {
+  getViewMat() {
+    var out = mat4.create();
     var lookAt = vec3.create();
     vec3.add(lookAt, this.pos, this.forward);
     mat4.lookAt(out, this.pos, lookAt, this.up);
