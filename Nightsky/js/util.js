@@ -89,3 +89,20 @@ function createProgram(gl, vertexShader, fragmentShader) {
     }
 	return program;
 }
+
+/**
+ * Transforms spherical coordinates to cartesian coordinates.
+ *
+ * @param {number} radius Radius-Coordinate
+ * @param {number} theta Theta-Coordinate
+ * @param {number} phi Phi-Coordinate
+ *
+ * @returns {Array<number>} Array of length 3 containing the desired cartesian coordinates.
+ */
+function sphericalToCartesian(radius, theta, phi) {
+	return Array(
+		radius * Math.sin(theta) * Math.cos(phi),
+		radius * Math.sin(theta) * Math.sin(phi),
+		radius * Math.cos(theta)
+	);
+}
