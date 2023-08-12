@@ -78,7 +78,6 @@ function main(vsText, fsText) {
 
     // Buffer Data
     var data = sphere.getArrayBufferContent();
-    console.log(data.length)
 
     gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -89,8 +88,6 @@ function main(vsText, fsText) {
     let array = Array();
 
     Array(data.length-1).fill(1).map((n, i) => n + i - 1).forEach((item) => {array.push(item, item+1)})
-
-    console.log(array)
 
     var indices = new Uint16Array(array);
 
