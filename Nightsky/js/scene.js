@@ -7,7 +7,7 @@ function init() {
         './models/sphere.obj',
         './models/circle.obj',
         './models/connector.obj',
-        './starData/TOP 10000 bright.csv with coordinates.csv.csv'
+        './starData/TOP 100000 bright.csv with coordinates.csv.csv'
     ];
     loadResources(neededFiles);
 }
@@ -32,7 +32,7 @@ function main() {
         parseModelData(getDataMap('./models/connector.obj'))
     );
     var gaia = parseStarData(getDataMap(
-            './starData/TOP 10000 bright.csv with coordinates.csv.csv'
+            './starData/TOP 100000 bright.csv with coordinates.csv.csv'
     ));
     var models = {
         sun:        new Sphere(
@@ -173,38 +173,39 @@ function main() {
         17.15 * earthMass
     );
     var objectsWithShadows = sun.getObjectsToRender();
-    var objectsToRender = sun.getObjectsToRender();
+    var objectsToRender = [];
+    var objectsInTheBackground = [];
+    var connectedObjects = [];
+    var connectors = [];
+
     for (var i = 0; i < gaia[0].length; i++) {
-        objectsToRender.push(
+        objectsInTheBackground.push(
             new BackgroundStar(
                 gl, 
                 cam, 
                 gaia[0][i], 
                 gaia[1][i], 
-                1500  / gaia[2][i]
+                Math.max(Math.min(1000 / gaia[2][i], 100), 1)
             )
         );
     }
-    
+
     //test for connecting stars
-    var connectedStars = [];
     for (var i = 0; i < 4; i++) {
-        connectedStars.push(objectsToRender[objectsWithShadows.length 
-                + Math.round(
-                    (objectsToRender.length - objectsWithShadows.length) 
-                    * Math.random())]
+        connectedObjects.push(objectsInTheBackground[
+            Math.round((objectsInTheBackground.length) * Math.random())
+        ]);
+    }
+    for (var i = 0; i < connectedObjects.length-1; i++) {
+        connectors.push(
+            new Connector(gl, connectedObjects[i], connectedObjects[i+1])
         );
     }
-    for (var i = 0; i < connectedStars.length-1; i++) {
-        objectsToRender.push(
-            new Connector(gl, connectedStars[i], connectedStars[i+1])
-        );
-    }
-    objectsToRender.push(
+    connectors.push(
         new Connector(
             gl, 
-            connectedStars[connectedStars.length-1], 
-            connectedStars[0]
+            connectedObjects[connectedObjects.length-1], 
+            connectedObjects[0]
         )
     );
     
@@ -212,6 +213,9 @@ function main() {
     var dt = 0;
     var prevFrameTime = 0;
     var currFrameTime = 0;
+    var forward = vec3.create();
+    var camPosition = vec3.create();
+    var position = vec3.create();
     start();
     requestAnimationFrame(draw);
     function draw() {
@@ -223,6 +227,27 @@ function main() {
         //updating 
         cam.update(dt); 
         sun.update(1, 10);
+        if (!vec3.equals(forward, cam.forward) 
+            || !vec3.equals(camPosition, cam.pos)) 
+        {
+            forward = cam.forward;
+            camPosition = cam.pos;
+            objectsToRender = sun.getObjectsToRender();
+            for (var i = 0; i < connectors.length; i++) {
+                objectsToRender.push(connectors[i]);
+            }
+            for (var i = 0; i < objectsInTheBackground.length; i++) {
+                vec3.sub(
+                    position, 
+                    objectsInTheBackground[i].position, 
+                    cam.pos
+                );
+                if (vec3.angle(forward, position) < 30 * Math.PI / 180) {
+                    objectsToRender.push(objectsInTheBackground[i]);
+                }
+            }
+        }
+        
         genShadowMap(objectsWithShadows);
         render(objectsWithShadows, objectsToRender, cam);
         //next looop

@@ -41,7 +41,7 @@ var shadowGenFS = gl.createShader(gl.FRAGMENT_SHADER);
 var renderFS = gl.createShader(gl.FRAGMENT_SHADER);
 var shadowGenProgram;
 var renderProgram;
-var textureSize = 4096;
+var textureSize = 4096/2;
 var clip = [0.05, 10e10];
 var shadowMapCube = gl.createTexture();
 var shadowMapFramebuffer = gl.createFramebuffer();
@@ -173,9 +173,9 @@ function render(objectsWithShadows, objectsToRender, cam) {
     gl.useProgram(renderProgram);
     mat4.perspective(
         projMat, 
-        glMatrix.glMatrix.toRadian(45), 
+        glMatrix.glMatrix.toRadian(30), 
         canvasGl.width / canvasGl.height, 
-        0.05, 100e10
+        0.05, 10e8
     );
     gl.viewport(0,0,canvasGl.width, canvasGl.height);
     gl.clearColor(10/255, 10/255, 10/255, 1);

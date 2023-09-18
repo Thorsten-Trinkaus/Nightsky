@@ -147,7 +147,7 @@ function parseStarData(data) {
             );
             var length = vec3.length(pos);
             vec3.normalize(pos, pos);
-            vec3.scale(pos, pos, 100000);
+            vec3.scale(pos, pos, 50000);
             
             positions.push([pos[0],pos[1],pos[2]]);
             colors.push([r/5,g/5,b/5]);

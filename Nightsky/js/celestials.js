@@ -148,18 +148,12 @@ class BackgroundStar extends CelestialBody {
         vec3.sub(posToView, this.position, this.cam.pos);
         var rotateAxis = vec3.create();
         vec3.cross(rotateAxis, vec3.fromValues(0,1,0), posToView);
-        var angle = Math.acos(
-            vec3.dot(vec3.fromValues(0,1,0), posToView) 
-            / 
-            vec3.length(posToView)
-        );
+        var angle = vec3.angle(vec3.fromValues(0,1,0), posToView);
         var worldMat = mat4.create();
         var normalWorldMat = mat4.create();
         mat4.translate(worldMat, worldMat, this.position);
         mat4.rotate(worldMat, worldMat, angle, rotateAxis);
         mat4.scale(worldMat, worldMat, this.scale);
-        mat4.invert(normalWorldMat, worldMat);
-        mat4.transpose(normalWorldMat, normalWorldMat);
         return[worldMat, normalWorldMat];
     }
 }
@@ -184,15 +178,11 @@ class Connector extends CelestialBody {
         this.scale = vec3.fromValues(20, length, 20);
     }
     getWorldMats() {
-        var posToView = vec3.create();
-        vec3.sub(posToView, this.position, this.star1.position);
+        var posToStar = vec3.create();
+        vec3.sub(posToStar, this.position, this.star1.position);
         var rotateAxis = vec3.create();
-        vec3.cross(rotateAxis, vec3.fromValues(0,1,0), posToView);
-        var angle = Math.acos(
-            vec3.dot(vec3.fromValues(0,1,0), posToView) 
-            / 
-            vec3.length(posToView)
-        );
+        vec3.cross(rotateAxis, vec3.fromValues(0,1,0), posToStar);
+        var angle = vec3.angle(vec3.fromValues(0,1,0), posToStar);
         var worldMat = mat4.create();
         var normalWorldMat = mat4.create();
         mat4.translate(worldMat, worldMat, this.position);
