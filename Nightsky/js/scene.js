@@ -1,5 +1,7 @@
 function init() {
     var neededFiles = [
+        './shader/idTexVS.glsl',
+        './shader/idTexFS.glsl',
         './shader/shadowMapVS.glsl',
         './shader/shadowMapFS.glsl',
         './shader/renderVS.glsl',
@@ -7,15 +9,18 @@ function init() {
         './models/sphere.obj',
         './models/circle.obj',
         './models/connector.obj',
-        './starData/TOP 100000 bright.csv with coordinates.csv.csv'
+        './models/orbit.obj',
+        './starData/TOP 10000 bright.csv with coordinates.csv.csv'
     ];
     loadResources(neededFiles);
 }
 
 function main() {
     loadPrograms(
+        getDataMap('./shader/idTexVS.glsl'),
         getDataMap('./shader/shadowMapVS.glsl'),
         getDataMap('./shader/renderVS.glsl'),
+        getDataMap('./shader/idTexFS.glsl'),
         getDataMap('./shader/shadowMapFS.glsl'),
         getDataMap('./shader/renderFS.glsl')
     );
@@ -31,8 +36,12 @@ function main() {
         'connector.obj', 
         parseModelData(getDataMap('./models/connector.obj'))
     );
+    setModelDataMap(
+        'orbit.obj', 
+        parseModelData(getDataMap('./models/orbit.obj',))
+    );
     var gaia = parseStarData(getDataMap(
-            './starData/TOP 100000 bright.csv with coordinates.csv.csv'
+            './starData/TOP 10000 bright.csv with coordinates.csv.csv'
     ));
     var models = {
         sun:        new Sphere(
@@ -185,7 +194,8 @@ function main() {
                 cam, 
                 gaia[0][i], 
                 gaia[1][i], 
-                Math.max(Math.min(1000 / gaia[2][i], 100), 1)
+                //Math.max(Math.min(1000 / gaia[2][i], 100), 1),
+                50
             )
         );
     }
@@ -208,7 +218,13 @@ function main() {
             connectedObjects[0]
         )
     );
-    
+    var objectsWithOrbits = sun.objects;
+    var orbits = [];
+    for (var i = 1; i < objectsWithOrbits.length; i++) {
+        orbits.push(new Orbit(gl, objectsWithOrbits[i]));
+    }
+
+
     //frametimes
     var dt = 0;
     var prevFrameTime = 0;
@@ -226,7 +242,7 @@ function main() {
         prevFrameTime = currFrameTime;
         //updating 
         cam.update(dt); 
-        sun.update(1, 10);
+        sun.update(dt, 1);
         if (!vec3.equals(forward, cam.forward) 
             || !vec3.equals(camPosition, cam.pos)) 
         {
@@ -236,13 +252,16 @@ function main() {
             for (var i = 0; i < connectors.length; i++) {
                 objectsToRender.push(connectors[i]);
             }
+            for (var i = 0; i < orbits.length; i++) {
+                objectsToRender.push(orbits[i]);
+            }
             for (var i = 0; i < objectsInTheBackground.length; i++) {
                 vec3.sub(
                     position, 
                     objectsInTheBackground[i].position, 
                     cam.pos
                 );
-                if (vec3.angle(forward, position) < 30 * Math.PI / 180) {
+                if (vec3.angle(forward, position) < 45 * Math.PI / 180) {
                     objectsToRender.push(objectsInTheBackground[i]);
                 }
             }

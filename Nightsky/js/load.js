@@ -145,13 +145,15 @@ function parseStarData(data) {
                 parseFloat(parts[8]),
                 parseFloat(parts[9])
             );
-            var length = vec3.length(pos);
-            vec3.normalize(pos, pos);
-            vec3.scale(pos, pos, 50000);
+            var direction = vec3.clone(pos);
+            vec3.normalize(direction, direction);
+            vec3.scale(direction, direction, 10000);
+            vec3.scale(pos, pos, 500);
+            vec3.add(pos, pos, direction);
             
             positions.push([pos[0],pos[1],pos[2]]);
             colors.push([r/5,g/5,b/5]);
-            sizes.push(length);
+            sizes.push(100);
         }
 		
 	}

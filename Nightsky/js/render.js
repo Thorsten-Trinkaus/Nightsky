@@ -2,7 +2,7 @@ const { vec2, vec3, vec4, mat3, mat4 } = glMatrix;
 var canvasGl = document.getElementById('c1');
 var canvas2D = document.getElementById('c2');
 /** @type {WebGLRenderingContext} */
-var gl = canvasGl.getContext('webgl');
+var gl = canvasGl.getContext('webgl2');
 var context2D = canvas2D.getContext('2d');
 if (!gl) {
     alert('webgl not supported \n trying experimental');
@@ -35,17 +35,73 @@ gl.frontFace(gl.CCW);
 gl.cullFace(gl.BACK);
 var floatExtension = gl.getExtension("OES_texture_float");
 var floatLinearExtension = gl.getExtension("OES_texture_float_linear");
+var idGenVS = gl.createShader(gl.VERTEX_SHADER);
 var shadowGenVS = gl.createShader(gl.VERTEX_SHADER);
 var renderVS = gl.createShader(gl.VERTEX_SHADER);
+var idGenFS = gl.createShader(gl.FRAGMENT_SHADER);
 var shadowGenFS = gl.createShader(gl.FRAGMENT_SHADER);
 var renderFS = gl.createShader(gl.FRAGMENT_SHADER);
+var idGenProgram;
 var shadowGenProgram;
 var renderProgram;
 var textureSize = 4096/2;
 var clip = [0.05, 10e10];
+var idTexture = gl.createTexture();
 var shadowMapCube = gl.createTexture();
+var idTexFramebuffer = gl.createFramebuffer();
+var idTexRenderbuffer = gl.createRenderbuffer();
 var shadowMapFramebuffer = gl.createFramebuffer();
 var shadowMapRenderbuffer = gl.createRenderbuffer();
+gl.bindTexture(gl.TEXTURE_2D, idTexture);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+if (floatExtension && floatLinearExtension) {
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        canvasGl.width,
+        canvasGl.height,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        null
+    );
+} else {
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        canvasGl.width,
+        canvasGl.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+    );
+}
+gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
+gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
+gl.renderbufferStorage(
+    gl.RENDERBUFFER,
+    gl.DEPTH_COMPONENT16,
+    canvasGl.width,
+    canvasGl.height
+);
+gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    idTexture,
+    0
+);
+gl.framebufferRenderbuffer(
+    gl.FRAMEBUFFER,
+    gl.DEPTH_ATTACHMENT,
+    gl.RENDERBUFFER,
+    idTexRenderbuffer
+);
 gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -88,6 +144,7 @@ gl.renderbufferStorage(
     textureSize,
     textureSize
 );
+gl.bindTexture(gl.TEXTURE_2D, null);
 gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -105,6 +162,43 @@ function start() {
     canvasGl.style.zIndex = "2";
     canvas2D.style.zIndex = "1";
     onResize();
+}
+
+function genIdMap(clickableObjects) {
+    gl.useProgram(idGenProgram);
+    gl.bindTexture(gl.TEXTURE_2D, idTexture);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
+    gl.viewport(0,0,canvasGl.width, canvasGl.height);
+
+    //todo uniforms and attribs
+
+    for (var i = 0; i < clickableObjects.length; i++) {
+        gl.uniformMatrix4fv(
+          mWorld,
+          gl.FALSE,
+          clickableObjects[i].getWorldMats()[0]
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, clickableObjects[i].model.buffer);
+        gl.vertexAttribPointer(
+            vPos,
+            3,
+            gl.FLOAT,
+            gl.FALSE,
+            6 * Float32Array.BYTES_PER_ELEMENT,
+            0
+        );
+        gl.enableVertexAttribArray(vPos);
+        gl.drawArrays(
+            gl.TRIANGLES,
+            0,
+            clickableObjects[i].model.vertices.length
+        );
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
 function genShadowMap(objectsWithShadows) {
@@ -173,7 +267,7 @@ function render(objectsWithShadows, objectsToRender, cam) {
     gl.useProgram(renderProgram);
     mat4.perspective(
         projMat, 
-        glMatrix.glMatrix.toRadian(30), 
+        glMatrix.glMatrix.toRadian(45), 
         canvasGl.width / canvasGl.height, 
         0.05, 10e8
     );
@@ -263,9 +357,10 @@ function render(objectsWithShadows, objectsToRender, cam) {
     }
 }
 
-function loadPrograms(vs1,vs2,fs1,fs2) {
-    shadowGenProgram = createProgram(shadowGenVS, shadowGenFS, vs1, fs1);
-    renderProgram = createProgram(renderVS, renderFS, vs2, fs2);
+function loadPrograms(vs1,vs2,vs3,fs1,fs2,fs3) {
+    idGenProgram = createProgram(idGenVS, idGenFS, vs1, fs1);
+    shadowGenProgram = createProgram(shadowGenVS, shadowGenFS, vs2, fs2);
+    renderProgram = createProgram(renderVS, renderFS, vs3, fs3);
 }
 
 //creates and returns a gl program with given shaders

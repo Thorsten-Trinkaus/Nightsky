@@ -9,6 +9,7 @@ class CelestialBody {
         this.mass = mass;
         this.G = 6.67430e-11;
         this.objects = [this];
+        this.w = (2 * Math.PI) / (100 * vec3.length(this.position)); // winkelgeschwindigkeit
     }
     getWorldMats() {
         var worldMat = mat4.create();
@@ -51,12 +52,28 @@ class CelestialBody {
         }
         return objectsToRender;
     }
+    //update mit kreiskoord mit festem radius
     update(time, steps) {
         for (var i = 0; i < steps; i++) {
-            for( var j = 1; j < this.objects.length; j++) {
+            for (var j = 1; j < this.objects.length; j++) {
+                var r = vec3.length(this.objects[j].position);
+                var w = (2 * Math.PI) / (r*2);
+                var phi = Math.atan2(this.objects[j].position[0], this.objects[j].position[2]);
+                phi = (phi + time * w)%(2*Math.PI);
+                this.objects[j].position = vec3.fromValues(
+                    r * Math.sin(phi),
+                    0,
+                    r * Math.cos(phi)
+                );
+            }
+        }
+    }
+    updateWithGrav(time, steps) {
+        for (var i = 0; i < steps; i++) {
+            for(var j = 1; j < this.objects.length; j++) {
                 this.calcVelocity(this.objects[j], time);
             }
-            for( var j = 1; j < this.objects.length; j++) {
+            for(var j = 1; j < this.objects.length; j++) {
                 this.calcPosition(this.objects[j], time);
             }
         }
@@ -191,5 +208,21 @@ class Connector extends CelestialBody {
         mat4.invert(normalWorldMat, worldMat);
         mat4.transpose(normalWorldMat, normalWorldMat);
         return[worldMat, normalWorldMat];
+    }
+}
+
+class Orbit extends CelestialBody {
+    constructor(gl, star) {
+        var model = new Model(
+            gl, 'orbit.obj',
+            [1,1,1],
+            [1,1,1], 
+            [1,1,1], 
+            1, 1, 1, 1
+        );
+        var pos = vec3.create();
+        super(gl, model, pos, [0,0,0], 1000, 0);
+        var r = vec3.length(star.position);
+        this.scale = vec3.fromValues(r,5000,r);
     }
 }
