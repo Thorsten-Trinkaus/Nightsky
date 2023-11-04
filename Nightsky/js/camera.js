@@ -193,8 +193,10 @@ class ControllableCamera extends Camera {
     this.KeyValues.Mouse_Over = false;
   }
 
-  onMouseDown() {
-    this.KeyValues.Mouse = true;
+  onMouseDown(e) {
+    if (e.button == 0) {
+        this.KeyValues.Mouse = true;
+    }
   }
 
   onMouseUp() {

@@ -24,8 +24,17 @@ var textSettings = {
     textAlign:          'center',
     text:               'LOADING...'
 }
+var mouseX = -1;
+var mouseY = -1;
+var selectedStar = null;
 var resizeList = onResize.bind(this);
+var mouseMoveList = onMouseMove.bind(this);
+var mouseUpList = onMouseUp.bind(this);
+var keyDownList = onKeyDown.bind(this);
 window.addEventListener('resize', resizeList);
+window.addEventListener('mousemove', mouseMoveList);
+window.addEventListener('mouseup', mouseUpList);
+window.addEventListener('keydown', keyDownList);
 onResize();
 
 // enabling depth-testing and backface-culling
@@ -164,16 +173,35 @@ function start() {
     onResize();
 }
 
-function genIdMap(clickableObjects) {
+function genIdMap(clickableObjects, cam) {
     gl.useProgram(idGenProgram);
     gl.bindTexture(gl.TEXTURE_2D, idTexture);
     gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
     gl.viewport(0,0,canvasGl.width, canvasGl.height);
-
-    //todo uniforms and attribs
-
+    var mProj = gl.getUniformLocation(idGenProgram, 'mProj');
+    var mView = gl.getUniformLocation(idGenProgram, 'mView');
+    var mWorld = gl.getUniformLocation(idGenProgram, 'mWorld');
+    var id = gl.getUniformLocation(idGenProgram, 'id');
+    var vPos = gl.getAttribLocation(idGenProgram, 'vertPos');
+    mat4.perspective(
+        projMat, 
+        glMatrix.glMatrix.toRadian(45), 
+        canvasGl.width / canvasGl.height, 
+        0.05, 10e8
+    );
+    gl.uniformMatrix4fv(mProj, gl.FALSE, projMat);
+    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMat());
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     for (var i = 0; i < clickableObjects.length; i++) {
+        var idd = i + 1;;
+        gl.uniform4fv(id, [
+            ((idd >>  0) & 0xFF) / 0xFF,
+            ((idd >>  8) & 0xFF) / 0xFF,
+            ((idd >> 16) & 0xFF) / 0xFF,
+            ((idd >> 24) & 0xFF) / 0xFF,
+        ]);
         gl.uniformMatrix4fv(
           mWorld,
           gl.FALSE,
@@ -195,6 +223,18 @@ function genIdMap(clickableObjects) {
             clickableObjects[i].model.vertices.length
         );
     }
+    var data = new Uint8Array(4);
+    gl.readPixels(mouseX * gl.canvas.width / gl.canvas.clientWidth, gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    var starId =  data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24) - 1;
+    if (selectedStar != null) { 
+        selectedStar.scale = vec3.fromValues(50,50,50);
+        selectedStar = null;
+    }
+    if (starId >= 0) {
+        selectedStar = clickableObjects[starId];
+        selectedStar.scale = vec3.fromValues(200,200,200);
+    } 
+    
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -312,13 +352,13 @@ function render(objectsWithShadows, objectsToRender, cam) {
         } else {
             gl.uniform1i(mode, 1);
         }
-        gl.uniform1f(kAmb, objectsToRender[i].model.kAmb);
-        gl.uniform1f(kDif, objectsToRender[i].model.kDif);
-        gl.uniform1f(kSpe, objectsToRender[i].model.kSpe); 
-        gl.uniform1f(shininess, objectsToRender[i].model.shininess);
-        gl.uniform3fv(ambientColor, objectsToRender[i].model.ambColor);
-        gl.uniform3fv(diffuseColor, objectsToRender[i].model.difColor);
-        gl.uniform3fv(specularColor, objectsToRender[i].model.speColor);
+        gl.uniform1f(kAmb, objectsToRender[i].material.kAmb);
+        gl.uniform1f(kDif, objectsToRender[i].material.kDif);
+        gl.uniform1f(kSpe, objectsToRender[i].material.kSpe); 
+        gl.uniform1f(shininess, objectsToRender[i].material.shininess);
+        gl.uniform3fv(ambientColor, objectsToRender[i].ambColor);
+        gl.uniform3fv(diffuseColor, objectsToRender[i].difColor);
+        gl.uniform3fv(specularColor, objectsToRender[i].speColor);
         gl.uniformMatrix4fv(
             mWorld, 
             gl.FALSE, 
@@ -427,6 +467,28 @@ function onResize() {
     context2D.fillStyle = textSettings.fillStyle;
     context2D.textAlign = textSettings.textAlign;
     context2D.fillText(textSettings.text, canvas2D.width/2, canvas2D.height/2);
+}
+
+function onMouseMove(m) {
+    var rect = canvasGl.getBoundingClientRect();
+    mouseX = m.clientX - rect.left;
+    mouseY = m.clientY - rect.top;
+}
+
+function onMouseUp(e) {
+    if (e.button == 1) {
+        if (selectedStar != null) {
+            addConnector(selectedStar);
+        }
+    }
+}
+
+function onKeyDown(e) {
+    if (e.code == "Digit1") {
+        if (selectedStar != null) {
+            loading(selectedStar.index);
+        }
+    }
 }
 
 function getCanvas() {

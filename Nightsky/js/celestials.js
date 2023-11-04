@@ -1,15 +1,40 @@
+class Material {
+    constructor(kAmb, kDif, kSpe, shininess) {
+        this.kAmb = kAmb;
+        this.kDif = kDif;
+        this.kSpe = kSpe;
+        this.shininess = shininess;
+    }
+}
+
 class CelestialBody {
-    constructor(gl, model, position, velocity, size, mass) {
+    constructor(gl, model, position, scale, material, colors) {
         this.gl = gl;
         this.model = model;
-        this.position = vec3.fromValues(position[0], position[1], position[2]);
-        this.velocity = vec3.fromValues(velocity[0], velocity[1], velocity[2]);
-        this.size = size;
-        this.scale = vec3.fromValues(size, size, size);
-        this.mass = mass;
-        this.G = 6.67430e-11;
+        this.position = position;
+        this.scale = scale;
+        this.material = material;
+        this.ambColor = colors[0];
+        this.difColor = colors[1];
+        this.speColor = colors[2];
         this.objects = [this];
-        this.w = (2 * Math.PI) / (100 * vec3.length(this.position)); // winkelgeschwindigkeit
+        this.root = null;
+    }
+    addObject(model, position, scale, material, colors) {
+        var truePosition = [
+            this.position[0] + position[0],
+            this.position[1] + position[1],
+            this.position[2] + position[2]
+        ];
+        this.objects.push(new CelestialBody(
+            this.gl,
+            model,
+            truePosition,
+            scale,
+            material,
+            colors
+        ));
+        this.objects[this.objects.length - 1].root = this;
     }
     getWorldMats() {
         var worldMat = mat4.create();
@@ -20,63 +45,72 @@ class CelestialBody {
         mat4.transpose(normalWorldMat, normalWorldMat);
         return[worldMat, normalWorldMat];
     }
-    addObject(model, position, velocity, size, mass) {
-        var truePosition = [
-            this.position[0] + position[0],
-            this.position[1] + position[1],
-            this.position[2] + position[2]
-        ];
-        var trueVelocity = [
-            this.velocity[0] + velocity[0],
-            this.velocity[1] + velocity[1],
-            this.velocity[2] + velocity[2]
-        ];
-        this.objects.push(new CelestialBody(
-            this.gl, 
-            model,
-            truePosition, 
-            velocity, 
-            size, 
-            mass
-        ));
-    }
     getObjectsToRender() {
         var objectsToRender = [];
-        var listOfObjects = [];
         objectsToRender.push(this);
         for (var i = 1; i < this.objects.length; i++) {
-            listOfObjects = this.objects[i].getObjectsToRender();
-            listOfObjects.forEach(obj => {
+            this.objects[i].getObjectsToRender().forEach(obj => {
                 objectsToRender.push(obj);
             });
         }
         return objectsToRender;
     }
-    //update mit kreiskoord mit festem radius
     update(time, steps) {
         for (var i = 0; i < steps; i++) {
             for (var j = 1; j < this.objects.length; j++) {
+                if (this.root != null) {
+                    vec3.sub(
+                        this.objects[j].position, 
+                        this.objects[j].position, 
+                        this.root.position
+                    );
+                }
                 var r = vec3.length(this.objects[j].position);
-                var w = (2 * Math.PI) / (r*2);
+                var w = (2 * Math.PI) / (r*2); //Winkelgeschwindigkeit
                 var phi = Math.atan2(this.objects[j].position[0], this.objects[j].position[2]);
-                phi = (phi + time * w)%(2*Math.PI);
+                phi = (phi + time * w) % (2 * Math.PI);
                 this.objects[j].position = vec3.fromValues(
                     r * Math.sin(phi),
                     0,
                     r * Math.cos(phi)
                 );
+                if (this.root != null) {
+                    vec3.add(
+                        this.objects[j].position, 
+                        this.objects[j].position, 
+                        this.root.position
+                    );
+                }
+                this.objects[j].update(time, 1);
             }
         }
     }
-    updateWithGrav(time, steps) {
-        for (var i = 0; i < steps; i++) {
-            for(var j = 1; j < this.objects.length; j++) {
-                this.calcVelocity(this.objects[j], time);
-            }
-            for(var j = 1; j < this.objects.length; j++) {
-                this.calcPosition(this.objects[j], time);
-            }
-        }
+}
+
+class CelestialBodyPhysics extends CelestialBody {
+    constructor(gl, model, position, scale, material, colors, velocity, mass) {
+        super(gl, model, position, scale, material, colors);
+        this.velocity = velocity;
+        this.mass = mass;
+        this.G = 6.67430e-11;
+    }
+    addObject(model, position, scale, material, colors, velocity, mass) {
+        var truePosition = [
+            this.position[0] + position[0],
+            this.position[1] + position[1],
+            this.position[2] + position[2]
+        ];
+        this.objects.push(new CelestialBodyPhysics(
+            this.gl, 
+            model,
+            truePosition,
+            scale,
+            material,
+            colors,
+            velocity, 
+            mass
+        ));
+        this.objects[this.objects.length - 1].root = this;
     }
     calcVelocity(obj1, time) {
         var acceleration = vec3.create();
@@ -109,12 +143,59 @@ class CelestialBody {
             vec3.add(object.position, object.position, vel);
         });
     }
+    update(time, steps) {
+        for (var i = 0; i < steps; i++) {
+            for(var j = 1; j < this.objects.length; j++) {
+                this.calcVelocity(this.objects[j], time);
+            }
+            for(var j = 1; j < this.objects.length; j++) {
+                this.calcPosition(this.objects[j], time);
+            }
+        }
+    }
 }
 
 class Star extends CelestialBody {
-    constructor(gl, model, size, mass) {
-        super(gl, model, [0,0,0], [0,0,0], size, mass);
-        this.gl = gl;
+    constructor(gl, model, scale, material, colors) {
+        super(gl, model, [0,0,0], scale, material, colors);
+        this.cams = [
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(1,0,0)),
+                vec3.fromValues(0,-1,0)
+            ),
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(-1,0,0)),
+                vec3.fromValues(0,-1,0)
+            ),
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(0,1,0)),
+                vec3.fromValues(0,0,1)
+            ),
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(0,-1,0)),
+                vec3.fromValues(0,0,-1)
+            ),
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(0,0,1)),
+                vec3.fromValues(0,-1,0)
+            ),
+            new Camera(
+                this.position,
+                vec3.add(vec3.create(), this.position, vec3.fromValues(0,0,-1)),
+                vec3.fromValues(0,-1,0)
+            ),
+        ];
+    }
+}
+
+class StarPhysics extends CelestialBodyPhysics {
+    constructor(gl, model, scale, material, colors, mass) {
+        super(gl, model, [0,0,0], scale, material, colors, [0,0,0], mass);
         this.cams = [
             new Camera(
                 this.position,
@@ -151,13 +232,9 @@ class Star extends CelestialBody {
 }
 
 class BackgroundStar extends CelestialBody {
-    constructor(gl, cam, position, color, size) {
-        var model = new Model(
-            gl, 'circle.obj', 
-            color, color, color, 
-            1, 1, 1, 1
-        );
-        super(gl, model, position, [0,0,0], size, 0);
+    constructor(gl, index, cam, model, position, scale, material, colors) {
+        super(gl, model, position, scale, material, colors);
+        this.index = index;
         this.cam = cam;
     }
     getWorldMats() {
@@ -176,23 +253,22 @@ class BackgroundStar extends CelestialBody {
 }
 
 class Connector extends CelestialBody {
-    constructor(gl, star1, star2) {
-        var model = new Model(
-            gl, 'connector.obj', 
-            [211/255,89/255,68/255], 
-            [1,1,1], 
-            [1,1,1], 
-            1, 1, 1, 1
-        );
+    constructor(gl, model, star1, star2, material) {
         var pos = vec3.create();
         vec3.sub(pos, star1.position, star2.position);
         var length = vec3.length(pos);
         vec3.scale(pos, pos, 0.5);
         vec3.add(pos, pos, star2.position);
-        super(gl, model, pos, [0,0,0], 55, 0);
+        super(
+            gl, 
+            model, 
+            pos, 
+            [20, length-150, 20], 
+            material, 
+            [[211/255,89/255,68/255], [1,1,1], [1,1,1]]
+        );
         this.star1 = star1;
         this.star2 = star2;
-        this.scale = vec3.fromValues(20, length, 20);
     }
     getWorldMats() {
         var posToStar = vec3.create();
@@ -212,17 +288,14 @@ class Connector extends CelestialBody {
 }
 
 class Orbit extends CelestialBody {
-    constructor(gl, star) {
-        var model = new Model(
-            gl, 'orbit.obj',
-            [1,1,1],
-            [1,1,1], 
-            [1,1,1], 
-            1, 1, 1, 1
+    constructor(gl, model, obj, material) {
+        super(
+            gl, 
+            model, 
+            [0,0,0], 
+            [vec3.length(obj.position),6000,vec3.length(obj.position)], 
+            material,
+            [[1,1,1],[1,1,1],[1,1,1]]
         );
-        var pos = vec3.create();
-        super(gl, model, pos, [0,0,0], 1000, 0);
-        var r = vec3.length(star.position);
-        this.scale = vec3.fromValues(r,5000,r);
     }
 }
