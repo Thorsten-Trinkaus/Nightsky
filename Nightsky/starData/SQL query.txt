@@ -1,0 +1,24 @@
+SELECT
+    TOP 5000 source_id,
+    ra,
+    dec,
+    pseudocolour,
+    phot_rp_mean_mag,
+    phot_bp_mean_mag,
+    r_med_photogeo AS dist,
+    phot_g_mean_mag AS gmag
+FROM
+    gedr3dist.litewithdist
+ORDER BY
+    gmag
+
+
+https://dc.zah.uni-heidelberg.de/__system__/adql/query/form
+
+@MISC{vo:gavoadql,
+  year=2008,
+  title={{ADQL} Query},
+  author={{GAVO} Data Center},
+  url={http://dc.zah.uni-heidelberg.de/__system__/adql/query/info},
+  howpublished={{VO} resource provided by the {GAVO} Data Center}
+}
