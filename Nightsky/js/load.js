@@ -17,12 +17,29 @@ function loadTextResource(url, callback) {
 	request.send();
 }
 
+function loadImageResource(url, callback) {
+    var request = new Image();
+    request.onload = function () {
+        callback(null, request);
+    };
+    request.src = url;
+}
+
 var dataMap = new Map();
 var count = 0;
-function loadResources(list) {
-    count = list.length;
-    list.forEach(filename => {
+function loadResources(textFiles, imageFiles) {
+    count = textFiles.length + imageFiles.length;
+    textFiles.forEach(filename => {
         loadTextResource(filename, function (err, data) {
+            if (err) {
+                alert('ERROR getting data of file ' + filename);
+                console.error(err);
+            }
+            setDataMap(filename, data);
+        });
+    });
+    imageFiles.forEach(filename => {
+        loadImageResource(filename, function (err, data) {
             if (err) {
                 alert('ERROR getting data of file ' + filename);
                 console.error(err);
@@ -49,6 +66,7 @@ function parseModelData(data) {
 	//request(filename);
 	var positions = [];
 	var normals = [];
+    var texCoords = [];
 	var vertices = [];
 
 	var lines = data.split('\n');
@@ -66,10 +84,16 @@ function parseModelData(data) {
 				parseFloat(parts[2]),
 				parseFloat(parts[3])
 			);
+        } else if (parts[0] === 'vt') {
+            texCoords.push(
+                parseFloat(parts[1]),
+                parseFloat(parts[2])
+            );
 		} else if (parts[0] === 'f') {
 			for (var j = 1; j < parts.length; j++) {
 				var indexParts = parts[j].split('/');
 				var positionIndex = parseInt(indexParts[0]) - 1;
+                var texCoordIndex = parseInt(indexParts[1]) - 1;
                 var normalIndex = parseInt(indexParts[2]) - 1;
 				vertices.push(
 					positions[positionIndex * 3], 
@@ -81,14 +105,48 @@ function parseModelData(data) {
 					normals[normalIndex * 3 + 1], 
 					normals[normalIndex * 3 + 2]
 				);
+                vertices.push(
+                    texCoords[texCoordIndex * 2],
+                    texCoords[texCoordIndex * 2 + 1]
+                );
 			}
 		}
 	}
 	return new Float32Array(vertices);
 }
 
+function parseStarSignData(data, connectionData) {
+    var positions = [];
+    var colors = [];
+    var sizes = [];
+    var connections = [];
+    var hipMap = new Map();
+    var lines = data.split('\n');
+    for (var i = 1; i < lines.length; i++) {
+        var parts = lines[i].trim().split(',');
+        hipMap.set(parseFloat(parts[0]),i-1);
+        positions.push([
+            parseFloat(parts[4]),
+            parseFloat(parts[5]),
+            parseFloat(parts[6])
+        ]);
+        colors.push([1,1,1,1]);
+        sizes.push(10);
+    }
+    var lines = connectionData.split('\n');
+    for (var i = 1; i < lines.length; i++) {
+        var parts = lines[i].trim().split(',');
+        if (parts[1] != '' && parts[2] != '') {
+            connections.push([
+                hipMap.get(parseFloat(parts[1])),
+                hipMap.get(parseFloat(parts[2]))
+            ]);
+        }
+    }
+    return [positions, colors, sizes, connections];
+}
+
 function parseStarData(data) {
-    //request(filename);
 	var positions = [];
 	var colors = [];
     var sizes = [];
@@ -146,8 +204,8 @@ function parseStarData(data) {
                 parseFloat(parts[9])
             );
             positions.push(pos);
-            colors.push([r/5,g/5,b/5]);
-            sizes.push(100);
+            colors.push([r/5,g/5,b/5,bri]);
+            sizes.push(5);
         }
 		
 	}

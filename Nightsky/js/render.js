@@ -1,8 +1,8 @@
-const { vec2, vec3, vec4, mat3, mat4 } = glMatrix;
+const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
 var canvasGl = document.getElementById('c1');
 var canvas2D = document.getElementById('c2');
 /** @type {WebGLRenderingContext} */
-var gl = canvasGl.getContext('webgl2');
+var gl = canvasGl.getContext('webgl');
 var context2D = canvas2D.getContext('2d');
 if (!gl) {
     alert('webgl not supported \n trying experimental');
@@ -30,11 +30,11 @@ var selectedStar = null;
 var resizeList = onResize.bind(this);
 var mouseMoveList = onMouseMove.bind(this);
 var mouseUpList = onMouseUp.bind(this);
-var keyDownList = onKeyDown.bind(this);
+var keyUpList = onKeyUp.bind(this);
 window.addEventListener('resize', resizeList);
 window.addEventListener('mousemove', mouseMoveList);
 window.addEventListener('mouseup', mouseUpList);
-window.addEventListener('keydown', keyDownList);
+window.addEventListener('keyup', keyUpList);
 onResize();
 
 // enabling depth-testing and backface-culling
@@ -50,11 +50,17 @@ var renderVS = gl.createShader(gl.VERTEX_SHADER);
 var idGenFS = gl.createShader(gl.FRAGMENT_SHADER);
 var shadowGenFS = gl.createShader(gl.FRAGMENT_SHADER);
 var renderFS = gl.createShader(gl.FRAGMENT_SHADER);
+var renderSolidVS = gl.createShader(gl.VERTEX_SHADER);
+var renderSolidFS = gl.createShader(gl.FRAGMENT_SHADER);
+var renderShadedVS = gl.createShader(gl.VERTEX_SHADER);
+var renderShadedFS = gl.createShader(gl.FRAGMENT_SHADER);
 var idGenProgram;
 var shadowGenProgram;
 var renderProgram;
-var textureSize = 4096/2;
-var clip = [0.05, 10e10];
+var renderSolidProgram;
+var renderShadedProgram;
+var textureSize = 4096;
+var clip = [.5, 10000.0];
 var idTexture = gl.createTexture();
 var shadowMapCube = gl.createTexture();
 var idTexFramebuffer = gl.createFramebuffer();
@@ -65,31 +71,17 @@ gl.bindTexture(gl.TEXTURE_2D, idTexture);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-if (floatExtension && floatLinearExtension) {
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        canvasGl.width,
-        canvasGl.height,
-        0,
-        gl.RGBA,
-        gl.FLOAT,
-        null
-    );
-} else {
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        canvasGl.width,
-        canvasGl.height,
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        null
-    );
-}
+gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    canvasGl.width,
+    canvasGl.height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    null
+);
 gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
 gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
 gl.renderbufferStorage(
@@ -161,10 +153,10 @@ var projMat = mat4.create();
 var shadowMapProj = mat4.create();
 mat4.perspective(
     shadowMapProj, 
-    glMatrix.glMatrix.toRadian(90),
+    (90/180)*Math.PI,
     1,
-    clip[0],
-    clip[1]
+    0.5,
+    10000.0
 );
 
 function start() {
@@ -176,6 +168,25 @@ function start() {
 function genIdMap(clickableObjects, cam) {
     gl.useProgram(idGenProgram);
     gl.bindTexture(gl.TEXTURE_2D, idTexture);
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        canvasGl.width,
+        canvasGl.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
+    gl.renderbufferStorage(
+        gl.RENDERBUFFER,
+        gl.DEPTH_COMPONENT16,
+        canvasGl.width,
+        canvasGl.height
+    );
     gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
     gl.viewport(0,0,canvasGl.width, canvasGl.height);
@@ -186,12 +197,12 @@ function genIdMap(clickableObjects, cam) {
     var vPos = gl.getAttribLocation(idGenProgram, 'vertPos');
     mat4.perspective(
         projMat, 
-        glMatrix.glMatrix.toRadian(45), 
+        cam.angle, 
         canvasGl.width / canvasGl.height, 
-        0.05, 10e8
+        1
     );
     gl.uniformMatrix4fv(mProj, gl.FALSE, projMat);
-    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMat());
+    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMatrix());
     gl.clearColor(0,0,0,1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     for (var i = 0; i < clickableObjects.length; i++) {
@@ -213,7 +224,7 @@ function genIdMap(clickableObjects, cam) {
             3,
             gl.FLOAT,
             gl.FALSE,
-            6 * Float32Array.BYTES_PER_ELEMENT,
+            8 * Float32Array.BYTES_PER_ELEMENT,
             0
         );
         gl.enableVertexAttribArray(vPos);
@@ -224,17 +235,27 @@ function genIdMap(clickableObjects, cam) {
         );
     }
     var data = new Uint8Array(4);
-    gl.readPixels(mouseX * gl.canvas.width / gl.canvas.clientWidth, gl.canvas.height - mouseY * gl.canvas.height / gl.canvas.clientHeight - 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    var starId =  data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24) - 1;
+    gl.readPixels(
+        mouseX, 
+        canvasGl.height - mouseY - 1, 
+        1, 
+        1, 
+        gl.RGBA, 
+        gl.UNSIGNED_BYTE, 
+        data
+    );
+    var starId =  data[0] + 
+        (data[1] << 8) + 
+        (data[2] << 16) + 
+        (data[3] << 24) - 1;
     if (selectedStar != null) { 
-        selectedStar.scale = vec3.fromValues(50,50,50);
+        selectedStar.unselect();
         selectedStar = null;
     }
     if (starId >= 0) {
         selectedStar = clickableObjects[starId];
-        selectedStar.scale = vec3.fromValues(200,200,200);
+        selectedStar.select();
     } 
-    
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -258,7 +279,7 @@ function genShadowMap(objectsWithShadows) {
     gl.uniformMatrix4fv(mProj, gl.FALSE, shadowMapProj);
     var shadowCams = objectsWithShadows[0].cams;
     for (var i = 0; i < shadowCams.length; i++) {
-        gl.uniformMatrix4fv(mView, gl.FALSE, shadowCams[i].getViewMat());
+        gl.uniformMatrix4fv(mView, gl.FALSE, shadowCams[i].getViewMatrix());
         gl.framebufferTexture2D(
             gl.FRAMEBUFFER, 
             gl.COLOR_ATTACHMENT0, 
@@ -286,7 +307,7 @@ function genShadowMap(objectsWithShadows) {
                 3, 
                 gl.FLOAT, 
                 gl.FALSE, 
-                6 * Float32Array.BYTES_PER_ELEMENT, 
+                8 * Float32Array.BYTES_PER_ELEMENT, 
                 0
             );
             gl.enableVertexAttribArray(vPos);
@@ -303,62 +324,132 @@ function genShadowMap(objectsWithShadows) {
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
 
-function render(objectsWithShadows, objectsToRender, cam) {
-    gl.useProgram(renderProgram);
+function render(solidObjects, shadedObjects, cam, lightPosition) {
     mat4.perspective(
-        projMat, 
-        glMatrix.glMatrix.toRadian(45), 
-        canvasGl.width / canvasGl.height, 
-        0.05, 10e8
+        projMat,
+        cam.angle,
+        canvasGl.width / canvasGl.height,
+        100
     );
-    gl.viewport(0,0,canvasGl.width, canvasGl.height);
+    gl.viewport(0, 0, canvasGl.width, canvasGl.height);
     gl.clearColor(10/255, 10/255, 10/255, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    var kAmb = gl.getUniformLocation(renderProgram, 'kAmb');
-    var kDif = gl.getUniformLocation(renderProgram, 'kDif');
-    var kSpe = gl.getUniformLocation(renderProgram, 'kSpe');
-    var shininess = gl.getUniformLocation(renderProgram, 'shininess');
-    var ambientColor = gl.getUniformLocation(renderProgram, 'ambientColor');
-    var diffuseColor = gl.getUniformLocation(renderProgram, 'diffuseColor');
-    var specularColor = gl.getUniformLocation(renderProgram, 'specularColor');
-    var lightPos = gl.getUniformLocation(renderProgram, 'lightPos');
-    var viewPos = gl.getUniformLocation(renderProgram, 'viewPos');
-    var lightShadowMap = gl.getUniformLocation(renderProgram,'lightShadowMap');
-    var shaClip = gl.getUniformLocation(renderProgram, 'shadowClipNearFar');
-    var bias = gl.getUniformLocation(renderProgram, 'bias');
-    var mode = gl.getUniformLocation(renderProgram, 'mode');
-    var position = gl.getAttribLocation(renderProgram, 'position');
-    var normal = gl.getAttribLocation(renderProgram, 'normal');
-    var mProj = gl.getUniformLocation(renderProgram, 'mProj');
-    var mView = gl.getUniformLocation(renderProgram, 'mView');
-    var mWorld = gl.getUniformLocation(renderProgram, 'mWorld');
-    var mNormal = gl.getUniformLocation(renderProgram, 'mNormal');
+    renderShaded(shadedObjects, cam, lightPosition);
+    renderSolid(solidObjects, cam);
+}
+
+function renderSolid(objectsToRender, cam) {
+    gl.useProgram(renderSolidProgram);
+    var mWorld = gl.getUniformLocation(renderSolidProgram, 'mWorld');
+    var mView = gl.getUniformLocation(renderSolidProgram, 'mView');
+    var mProj = gl.getUniformLocation(renderSolidProgram, 'mProj');
+    var texture = gl.getUniformLocation(renderSolidProgram, 'texture');
+    var enableTex = gl.getUniformLocation(renderSolidProgram, 'enableTexture');
+    var color = gl.getUniformLocation(renderSolidProgram, 'color');
+    var brightness = gl.getUniformLocation(renderSolidProgram, 'brightness');
+    var position = gl.getAttribLocation(renderSolidProgram, 'position');
+    var texCoord = gl.getAttribLocation(renderSolidProgram, 'texCoord');
+    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMatrix());
+    gl.uniformMatrix4fv(mProj, gl.FALSE, projMat);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(texture, 0)
+    for (var i = 0; i < objectsToRender.length; i++) {
+        if (objectsToRender[i].texture == null) {
+            gl.uniform1i(enableTex, 0);
+        } else {
+            gl.uniform1i(enableTex, 1);
+            gl.bindTexture(gl.TEXTURE_2D, objectsToRender[i].texture);
+        }
+        gl.uniform3fv(color, objectsToRender[i].ambColor);
+        gl.uniform1f(brightness, objectsToRender[i].brightness);
+        gl.uniformMatrix4fv(
+            mWorld,
+            gl.FALSE,
+            objectsToRender[i].getWorldMats()[0]
+        );
+        gl.bindBuffer(gl.ARRAY_BUFFER, objectsToRender[i].model.buffer);
+        gl.vertexAttribPointer(
+            position,
+            3,
+            gl.FLOAT,
+            gl.FALSE,
+            8 * Float32Array.BYTES_PER_ELEMENT,
+            0
+        );
+        gl.vertexAttribPointer(
+            texCoord,
+            2,
+            gl.FLOAT,
+            gl.FALSE,
+            8 * Float32Array.BYTES_PER_ELEMENT,
+            6 * Float32Array.BYTES_PER_ELEMENT
+        );
+        gl.enableVertexAttribArray(position);
+        gl.enableVertexAttribArray(texCoord);
+        gl.drawArrays(
+            gl.TRIANGLES,
+            0,
+            objectsToRender[i].model.vertices.length
+        );
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null); //maybe in schleife meife
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+function renderShaded(objectsToRender, cam, lightPosition) {
+    gl.useProgram(renderShadedProgram);
+    var mWorld = gl.getUniformLocation(renderShadedProgram, 'mWorld');
+    var mNormal = gl.getUniformLocation(renderShadedProgram, 'mNormal');
+    var mView = gl.getUniformLocation(renderShadedProgram, 'mView');
+    var mProj = gl.getUniformLocation(renderShadedProgram, 'mProj');
+    var texture = gl.getUniformLocation(renderShadedProgram, 'texture');
+    var enableTex = gl.getUniformLocation(renderShadedProgram, 'enableTexture');
+    var kAmb = gl.getUniformLocation(renderShadedProgram, 'kAmb');
+    var kDif = gl.getUniformLocation(renderShadedProgram, 'kDif');
+    var kSpe = gl.getUniformLocation(renderShadedProgram, 'kSpe');
+    var shininess = gl.getUniformLocation(renderShadedProgram, 'shininess');
+    var ambColor = gl.getUniformLocation(renderShadedProgram, 'ambColor');
+    var difColor = gl.getUniformLocation(renderShadedProgram, 'difColor');
+    var speColor = gl.getUniformLocation(renderShadedProgram, 'speColor');
+    var brightness = gl.getUniformLocation(renderShadedProgram, 'brightness');
+    var lightPos = gl.getUniformLocation(renderShadedProgram, 'lightPosition');
+    var camPos = gl.getUniformLocation(renderShadedProgram, 'camPosition');
+    var shadMap = gl.getUniformLocation(renderShadedProgram,'lightShadowMap');
+    var shadClip = gl.getUniformLocation(renderShadedProgram, 'shadowClip');
+    var bias = gl.getUniformLocation(renderShadedProgram, 'bias');
+    var position = gl.getAttribLocation(renderShadedProgram, 'position');
+    var normal = gl.getAttribLocation(renderShadedProgram, 'normal');
+    var texCoord = gl.getAttribLocation(renderShadedProgram, 'texCoord');
     gl.uniform3fv(lightPos, objectsToRender[0].position);
-    gl.uniform3fv(viewPos, cam.pos);
-    gl.uniform1i(lightShadowMap, 0);
-    gl.uniform2fv(shaClip, clip);
+    gl.uniform3fv(camPos, cam.position);
+    gl.uniform2fv(shadClip, clip);
     if (this.floatExtension && this.floatLinearExtension) {
         gl.uniform1f(bias, 0.00001);
     } else {
         gl.uniform1f(bias, 0.003);
     }
     gl.uniformMatrix4fv(mProj, gl.FALSE, projMat);
-    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMat());
+    gl.uniformMatrix4fv(mView, gl.FALSE, cam.getViewMatrix());
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
+    gl.uniform1i(shadMap, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.uniform1i(texture, 1);
+    gl.uniform3fv(speColor, objectsToRender[0].ambColor);
     for (var i = 0; i < objectsToRender.length; i++) {
-        if (i == 0 || i >= objectsWithShadows.length) {
-            gl.uniform1i(mode, 0);
+        if (objectsToRender[i].texture == null) {
+            gl.uniform1i(enableTex, 0);
         } else {
-            gl.uniform1i(mode, 1);
+            gl.uniform1i(enableTex, 1);
+            gl.bindTexture(gl.TEXTURE_2D, objectsToRender[i].texture);
         }
         gl.uniform1f(kAmb, objectsToRender[i].material.kAmb);
         gl.uniform1f(kDif, objectsToRender[i].material.kDif);
         gl.uniform1f(kSpe, objectsToRender[i].material.kSpe); 
         gl.uniform1f(shininess, objectsToRender[i].material.shininess);
-        gl.uniform3fv(ambientColor, objectsToRender[i].ambColor);
-        gl.uniform3fv(diffuseColor, objectsToRender[i].difColor);
-        gl.uniform3fv(specularColor, objectsToRender[i].speColor);
+        gl.uniform3fv(ambColor, objectsToRender[i].ambColor);
+        gl.uniform3fv(difColor, objectsToRender[i].difColor);
+        gl.uniform1f(brightness, objectsToRender[i].brightness);
         gl.uniformMatrix4fv(
             mWorld, 
             gl.FALSE, 
@@ -375,7 +466,7 @@ function render(objectsWithShadows, objectsToRender, cam) {
             3,
             gl.FLOAT,
             gl.FALSE,
-            6 * Float32Array.BYTES_PER_ELEMENT,
+            8 * Float32Array.BYTES_PER_ELEMENT,
             0
         );
         gl.vertexAttribPointer(
@@ -383,24 +474,50 @@ function render(objectsWithShadows, objectsToRender, cam) {
             3,
             gl.FLOAT,
             gl.FALSE,
-            6 * Float32Array.BYTES_PER_ELEMENT,
+            8 * Float32Array.BYTES_PER_ELEMENT,
             3 * Float32Array.BYTES_PER_ELEMENT
         );
+        gl.vertexAttribPointer(
+            texCoord,
+            2,
+            gl.FLOAT,
+            gl.FALSE,
+            8 * Float32Array.BYTES_PER_ELEMENT,
+            6 * Float32Array.BYTES_PER_ELEMENT,
+            
+        );
         gl.enableVertexAttribArray(position);
+        gl.enableVertexAttribArray(texCoord);
         gl.enableVertexAttribArray(normal);
         gl.drawArrays(
             gl.TRIANGLES, 
             0, 
             objectsToRender[i].model.vertices.length
         );
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
 
-function loadPrograms(vs1,vs2,vs3,fs1,fs2,fs3) {
-    idGenProgram = createProgram(idGenVS, idGenFS, vs1, fs1);
-    shadowGenProgram = createProgram(shadowGenVS, shadowGenFS, vs2, fs2);
-    renderProgram = createProgram(renderVS, renderFS, vs3, fs3);
+function loadPrograms(vs1,vs2,vs3,vs4,fs1,fs2,fs3,fs4) {
+    idGenProgram = createProgram(
+        idGenVS, idGenFS, 
+        vs1, fs1
+    );
+    shadowGenProgram = createProgram(
+        shadowGenVS, shadowGenFS, 
+        vs2, fs2
+    );
+    renderSolidProgram = createProgram(
+        renderSolidVS, renderSolidFS, 
+        vs3, fs3
+    );
+    renderShadedProgram = createProgram(
+        renderShadedVS, renderShadedFS, 
+        vs4, fs4
+    );
 }
 
 //creates and returns a gl program with given shaders
@@ -476,18 +593,14 @@ function onMouseMove(m) {
 }
 
 function onMouseUp(e) {
-    if (e.button == 1) {
-        if (selectedStar != null) {
-            addConnector(selectedStar);
-        }
+    if (selectedStar != null) {
+        selectedStar.click(e.button);
     }
 }
 
-function onKeyDown(e) {
-    if (e.code == "Digit1") {
-        if (selectedStar != null) {
-            loading(selectedStar.index);
-        }
+function onKeyUp(e) {
+    if (selectedStar != null) {
+        selectedStar.keyClick(e.code);
     }
 }
 
