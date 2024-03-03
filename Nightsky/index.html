@@ -5,7 +5,7 @@
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="stylesheet" href="style.css">
   </head>
-  <body id="b1" onload="init()">
+  <body id="body" onload="init()">
     <canvas id="c1">
       your browser needs to support html5!
     </canvas>
@@ -26,7 +26,6 @@
           <img id="pauseImg" src="./images/pause.png"/>
         </button>
         PAUSE 
-        
       </div>
     </div>
     <div id="d3">
@@ -44,10 +43,20 @@
         COPY CURRENT STAR SIGNS 
         <button id="expStarSign">
           <img src="./images/copy.png"/>
-        </button>
+        </button><br />
+        STAR SIGN COLOR
+        <div id="color-wrapper">
+          <input type="color" id="color" name="color" value="#D35944"/>
+        </div><br /><br />
+        SIGNS<br />
+        <div id="signList">
+        </div>
       </div>
     </div>
+    <script src="js/texture.js"></script>
+    <script src="js/init.js"></script>
     <script src="js/gl-matrix-min.js"></script>
+    <script src="js/material.js"></script>
     <script src="js/load.js"></script>
     <script src="js/render.js"></script>
     <script src="js/celestials.js"></script>
