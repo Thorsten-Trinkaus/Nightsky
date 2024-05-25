@@ -38,10 +38,10 @@ void main() {
     if ((shadowMapValue + bias) >= depth) {
         if (enableTexture == 1) {
             vec4 texColor = texture2D(texture, vertTexCoord);
-            gl_FragColor = 0.5*texColor + 0.5*(
-                vec4(kAmb * ambColor +
-                kDif * lambertian * difColor +
-                kSpe * specular * speColor, brightness));
+            gl_FragColor = (
+                vec4((kAmb * (0.5 * texColor.rgb + 0.5 * ambColor) +
+                kDif * lambertian * (0.5 * texColor.rgb + 0.5 * difColor) +
+                kSpe * specular * speColor), brightness));
         } else {
             gl_FragColor = vec4(kAmb * ambColor +
                 kDif * lambertian * difColor +
@@ -50,9 +50,9 @@ void main() {
     } else {
         if (enableTexture == 1) {
             vec4 texColor = texture2D(texture, vertTexCoord);
-            gl_FragColor = 0.5*texColor + 0.5*vec4(kAmb * ambColor, brightness);
+            gl_FragColor = vec4(kAmb * (0.5 * texColor.rgb + 0.5 * ambColor), 1.0);
         } else {
-            gl_FragColor = vec4(kAmb * ambColor, brightness);
+            gl_FragColor = vec4(kAmb * ambColor, 1.0);
         }
     }
 }

@@ -891,10 +891,10 @@
                         // Recalculate the indices in the 
                         // backgroundObjects list.
                         if (index1 > sun.index) {
-                            index1 - 1;
+                            index1 -= 1;
                         }
                         if (index2 > sun.index) {
-                            index2 - 1;
+                            index2 -= 1;
                         }
                         // Add the Connector.
                         const newConnector = new Connector(
