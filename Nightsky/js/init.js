@@ -19,7 +19,7 @@ function init() {
         './models/circle.obj',
         './models/cylinder.obj',
         './models/orbit.obj',
-        './starData/TOP 100000 bright.csv with coordinates.csv.csv',
+        './starData/TOP 10000 bright.csv with coordinates.csv.csv',
         './starData/joined_distance_pc_xyz.csv',
         './starData/conns_HIP.csv',
         './starData/stars(1).csv'
@@ -66,7 +66,7 @@ function main() {
         getDataMap('./shader/shadowMapVS.glsl'),
         getDataMap('./shader/renderSolidVS.glsl'),
         getDataMap('./shader/renderShadedVS.glsl'), // getDataMap() is defined
-                                                    // in load.js
+                                                    // in load.js.
         getDataMap('./shader/idTexFS.glsl'),
         getDataMap('./shader/shadowMapFS.glsl'),
         getDataMap('./shader/renderSolidFS.glsl'),
@@ -103,7 +103,7 @@ function main() {
     // gaia data in form of an array [positions, colors, sizes], where 
     // positions, colors and sizes are arrays as well.
     const gaia = parseStarData(getDataMap(
-        './starData/TOP 100000 bright.csv with coordinates.csv.csv'
+        './starData/TOP 10000 bright.csv with coordinates.csv.csv'
     ));
     // Get starsign data. parseStarSignData() is defined in load.js. 
     // It returns the starsign data in form of an array 
@@ -112,8 +112,8 @@ function main() {
     // are the abbreviation of the different starsigns and the values
     //  are the HIPs of the stars in the starsign.
     const starSigns = parseStarSignData(
-        getDataMap('./starData/stars(1).csv'),  // data of the stars 
-        getDataMap('./starData/conns_HIP.csv')  // data of the connections
+        getDataMap('./starData/stars(1).csv'),  // Data of the stars .
+        getDataMap('./starData/conns_HIP.csv')  // Data of the connections.
     );
     const stars = starSigns[0];
     const signs = starSigns[1];
@@ -129,7 +129,7 @@ function main() {
         index = gaia[0].length;
         // Add the i-th star to the gaia data.
         gaia[0].push(stars[i][1]);
-        gaia[1].push([0.4, 0.1, 0.9,1]);
+        gaia[1].push([0.4, 0.1, 0.9]);
         gaia[2].push(5);
         // Get all the starsigns with the i-th star.
         signsList = starMap.get(stars[i][0]);
@@ -146,7 +146,7 @@ function main() {
     }
     // Add our sun to the gaia data.
     gaia[0].push([0, 0, 0]);
-    gaia[1].push([1,.5, 1, 1]);
+    gaia[1].push([0,1, 0]);
     gaia[2].push(5);
     // this function builds the scene and starts the render. It is defined
     // in scene.js.

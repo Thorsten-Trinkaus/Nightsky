@@ -61,10 +61,10 @@
             .then((image) => {                  // Call the callback function.
                 callback(image);
             })
-            .catch((path) => {                  // Catch errors and display                       
+            .catch((error) => {                  // Catch errors and display                       
                 console.error(                  // them on the console.
                 "ERROR getting data of file "   
-                + path
+                + path + ": " + error
                 );
                 
                 if (count > 0) {                // This is only usefull if this
@@ -173,7 +173,7 @@
 	    let lines = data.split("\n");
         // For every line in the file.
 	    for (let i = 0; i < lines.length; i++) {
-            // Split the line into individual words / numbers
+            // Split the line into individual words / numbers.
 		    let parts = lines[i].trim().split(' ');
             // If the line starts with v, the line has vertex positions.
             // Else if the line starts with vn, the line has vertex normals.
@@ -256,16 +256,16 @@
      * array and 2 maps. They are returned in an array:
      * [
      *      star data:      [HIP, [position-x, position-y, position-z]]
-     *      star sign map:  key  :  name of the star sign
-     *                      value:  list of HIPs, where 2 of them should be
-     *                              connected respectively
-     *      star map:       key  :  HIP of the star
-     *                      value:  list of star sign names, where the star is
-     *                              a part of
+     *      star sign map:  key  :  Name of the star sign.
+     *                      value:  List of HIPs, where 2 of them should be
+     *                              connected respectively.
+     *      star map:       key  :  HIP of the star.
+     *                      value:  List of star sign names, where the star is
+     *                              a part of.
      * ]
      * @param {!string} data - list of stars
      * @param {!string} connectionData - list of connections
-     * @returns {[stars, Map<string, [number]>, Map<number, [string]>]} returns 
+     * @returns {[stars, Map<string, number[]>, Map<number, string[]>]} returns 
      *      the star and connection data
      */
     function parseStarSignData(data, connectionData) {
@@ -336,7 +336,7 @@
 
     /**
      * @typedef {[number, number, number][]} positions
-     * @typedef {[number, number, number, number][]} colors
+     * @typedef {[number, number, number][]} colors
      */
     /**
      * This function parses the gaia data given as a string.
@@ -348,14 +348,14 @@
      * The function returns an array of all the position, color and 
      * size values. The resulting array has the form:
      * [
-     *      positions: [number, number, number][] - positions of the
+     *      positions: [number, number, number][] - Positions of the
      *                                              objects in the dataset
-     *                                              in xyz-coordinates
-     *      colors: [number, number, number, number][] - colors of the objects
-     *                                                   in the dataset in rgba
-     *      sizes:  number[] - scaling of the objects in the dataset in 
+     *                                              in xyz-coordinates.
+     *      colors: [number, number, number][] - Colors of the objects
+     *                                           in the dataset in rgb.
+     *      sizes:  number[] - Scaling of the objects in the dataset in 
      *                         xyz-direction. Only 1 number, because the
-     *                         scaling is the same in all directions 
+     *                         scaling is the same in all directions.
      * ]
      * @param {!string} data - gaia data as string
      * @returns {![positions, colors, number[]]} returns the values in an array
@@ -365,6 +365,9 @@
 	    let positions = [];
         // Array of all color values.
 	    let colors = [];
+        let maxR = 0;
+        let maxG = 0;
+        let maxB = 0;
         // Array of all sizes.
         let sizes = [];
         // Split the data into lines.

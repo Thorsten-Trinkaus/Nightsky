@@ -49,23 +49,29 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
     const floatExtension = gl.getExtension("OES_texture_float");
     const floatLinearExtension = gl.getExtension("OES_texture_float_linear");
     let idGenVS = gl.createShader(gl.VERTEX_SHADER);
-    let shadowGenVS = gl.createShader(gl.VERTEX_SHADER);
     let idGenFS = gl.createShader(gl.FRAGMENT_SHADER);
+    let bloomVS = gl.createShader(gl.VERTEX_SHADER);
+    let bloomFS = gl.createShader(gl.FRAGMENT_SHADER);
+    let shadowGenVS = gl.createShader(gl.VERTEX_SHADER);
     let shadowGenFS = gl.createShader(gl.FRAGMENT_SHADER);
     let renderSolidVS = gl.createShader(gl.VERTEX_SHADER);
     let renderSolidFS = gl.createShader(gl.FRAGMENT_SHADER);
     let renderShadedVS = gl.createShader(gl.VERTEX_SHADER);
     let renderShadedFS = gl.createShader(gl.FRAGMENT_SHADER);
     let idGenProgram;
+    let bloomProgram;
     let shadowGenProgram;
     let renderSolidProgram;
     let renderShadedProgram;
     let textureSize = 4096;
-    let clip = [.5, 10000.0];
+    let clip = [.001, 10000.0];
     let idTexture = gl.createTexture();
+    let bloomTexture = gl.createTexture();
     let shadowMapCube = gl.createTexture();
     let idTexFramebuffer = gl.createFramebuffer();
     let idTexRenderbuffer = gl.createRenderbuffer();
+    let bloomTexFramebuffer = gl.createFramebuffer();
+    let bloomTexRenderbuffer = gl.createRenderbuffer();
     let shadowMapFramebuffer = gl.createFramebuffer();
     let shadowMapRenderbuffer = gl.createRenderbuffer();
     gl.bindTexture(gl.TEXTURE_2D, idTexture);
@@ -104,6 +110,44 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         gl.RENDERBUFFER,
         idTexRenderbuffer
     );
+
+    gl.bindTexture(gl.TEXTURE_2D, bloomTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        canvasGl.width,
+        canvasGl.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+    );
+    gl.bindFramebuffer(gl.FRAMEBUFFER, bloomTexFramebuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, bloomTexRenderbuffer);
+    gl.renderbufferStorage(
+        gl.RENDERBUFFER,
+        gl.DEPTH_COMPONENT16,
+        canvasGl.width,
+        canvasGl.height
+    );
+    gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        bloomTexture,
+        0
+    );
+    gl.framebufferRenderbuffer(
+        gl.FRAMEBUFFER,
+        gl.DEPTH_ATTACHMENT,
+        gl.RENDERBUFFER,
+        bloomTexRenderbuffer
+    );
+
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
     gl.texParameteri(
         gl.TEXTURE_CUBE_MAP, 
@@ -154,7 +198,6 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             );
         }
     }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFramebuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderbuffer);
     gl.renderbufferStorage(
         gl.RENDERBUFFER,
@@ -187,29 +230,13 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         canvases[1].style.opacity = "1";
     }
 
+    function unselectStar() {
+        selectedStar = null;
+    }
     
     function genIdMap(clickableObjects, cam) {
         gl.useProgram(idGenProgram);
         gl.bindTexture(gl.TEXTURE_2D, idTexture);
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.RGBA,
-            canvasGl.width,
-            canvasGl.height,
-            0,
-            gl.RGBA,
-            gl.UNSIGNED_BYTE,
-            null
-        );
-        gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
-        gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
-        gl.renderbufferStorage(
-            gl.RENDERBUFFER,
-            gl.DEPTH_COMPONENT16,
-            canvasGl.width,
-            canvasGl.height
-        );
         gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
         gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
         gl.viewport(0,0,canvasGl.width, canvasGl.height);
@@ -284,7 +311,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
-    
+
     function genShadowMap(objectsWithShadows) {
         gl.useProgram(shadowGenProgram);
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
@@ -360,7 +387,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             projMat,
             cam.angle,
             canvasGl.width / canvasGl.height,
-            100
+            20
         );
         gl.viewport(0, 0, canvasGl.width, canvasGl.height);
         gl.clearColor(10/255, 10/255, 10/255, 1);
@@ -396,7 +423,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
                 gl.bindTexture(gl.TEXTURE_2D, objectsToRender[i].texture);
             }
             gl.uniform3fv(color, objectsToRender[i].ambColor);
-            gl.uniform1f(brightness, objectsToRender[i].brightness);
+            gl.uniform1f(brightness, objectsToRender[i].alpha);
             gl.uniformMatrix4fv(
                 mWorld,
                 gl.FALSE,
@@ -485,7 +512,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         gl.activeTexture(gl.TEXTURE1);
         gl.uniform1i(texture, 1);
         gl.uniform3fv(speColor, objectsToRender[0].ambColor);
-        for (let i = 0; i < objectsToRender.length; i++) {
+        for (let i = 1; i < objectsToRender.length; i++) {
             if (objectsToRender[i].texture == null) {
                 gl.uniform1i(enableTex, 0);
             } else {
@@ -498,7 +525,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             gl.uniform1f(shininess, objectsToRender[i].material.shininess);
             gl.uniform3fv(ambColor, objectsToRender[i].ambColor);
             gl.uniform3fv(difColor, objectsToRender[i].difColor);
-            gl.uniform1f(brightness, objectsToRender[i].brightness);
+            gl.uniform1f(brightness, objectsToRender[i].alpha);
             gl.uniformMatrix4fv(
                 mWorld, 
                 gl.FALSE, 
@@ -657,12 +684,19 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         }
     }
     
+    /**
+     * Getter function for the webGl canvas.
+     * @returns the webGl canvas
+     */
     function getCanvas() {
         return canvasGl;
     }
     
+    /**
+     * Getter function for the webGl context.
+     * @returns the webGl context
+     */
     function getGLContext() {
         return gl;
     }
-
 }

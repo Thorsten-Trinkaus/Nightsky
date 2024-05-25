@@ -1,8 +1,8 @@
 {
     // Map of textures (key: name, value: texture). This map is not global, 
-    // but can be accessed from the outside by the function getTexture(). To add 
-    // a model to the map either use addTexture() or addTextureFromPath(). This
-    // map is used to get textures selectively.
+    // but can be accessed from the outside by the function getTexture(). 
+    // To add a model to the map either use addTexture() or 
+    // addTextureFromPath(). This map is used to get textures selectively.
     const textures = new Map();
     // List of all textures. This list is not global, but can be accessed from
     // the outside by the function randTexture(). The textures get added
@@ -14,8 +14,8 @@
      * Getter function for the textures map.
      * @param {!string} name - the name of the texture that should be returned
      * @returns {?HTMLImageElement} the function returns the texture with the 
-     *      specified name | if there is no texture with this name, the function 
-     *      returns null
+     *      specified name | if there is no texture with this name, the 
+     *      function returns null
      */
     function getTexture(name) {
         // Return null, if there is no texture with this name.

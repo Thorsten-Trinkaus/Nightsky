@@ -24,7 +24,8 @@
             gl.bufferData(
                 gl.ARRAY_BUFFER, 
                 this.vertices, 
-                gl.STATIC_DRAW      // specify once - used many times by WebGL
+                gl.STATIC_DRAW      // Specified once | 
+                                    // used many times by WebGL.
             );
             // Unbind buffer.
             gl.bindBuffer(gl.ARRAY_BUFFER, null);

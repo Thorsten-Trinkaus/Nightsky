@@ -1,21 +1,21 @@
 {
-    //text dispaying iformation about the selected object
+    //Text dispaying iformation about the currently selected object.
     const infoText = document.getElementById('infoText');
     
-    // button to pause and unpause the objects orbiting the sun
+    // Button to pause and unpause the animation of the objects.
     const pauseButton = document.getElementById('pause');
     pauseButton.onclick = onPause.bind(this);
-    // imiage dispaying the pause button
+    // Image of the pause button.
     const pauseImg = document.getElementById('pauseImg');
-    // current pause state - true if paused
+    // Current pause state - true if paused.
     let pause = false;
     
-    // slider controlling orbit speed
+    // Slider controlling animation speed.
     const speedSlider = document.getElementById('speed');
     speedSlider.oninput = onSlider.bind(this);
-    // text displaying current orbit speed
+    // Text displaying current animation speed.
     const speedText = document.getElementById('speedText');
-    // current speed
+    // Current animation speed.
     let speed = speedSlider.value;
     speedText.textContent = speed;
     
@@ -194,16 +194,25 @@
     * Copies the current connection to the clipboard.
     */
     function onExport() {
-        let connectedObjects = getConnectedObjects();
+        // Get the list of objects, that need to be exported.
+        // The function getConnectedObjects() is defined in scene.js.
+        const connectedObjects = getConnectedObjects();
+        // The export-string we want to save to the clipboard.
         let result = "";
+        // For each star in the list look at all stars that are 
+        // connected to this star.
         for (let [star1, stars] of connectedObjects.entries()) {
+            // For each of these stars.
             for (let i = 0; i < stars.length; i = i + 2) {
+                // Convert the color of the connection from rgb to hex.
                 let r = (stars[i+1][0] * 255).toString(16);
                 let g = (stars[i+1][1] * 255).toString(16);
                 let b = (stars[i+1][2] * 255).toString(16);
                 r = r.length == 1? "0" + r : r;
                 g = g.length == 1? "0" + g : g;
                 b = b.length == 1? "0" + b : b;
+                // Add both stars and the color of the connections between them
+                // to the result.
                 result = result + "/" + star1 + "/" + stars[i] + "/" + 
                     r + g + b;
             }
