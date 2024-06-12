@@ -27,7 +27,7 @@
      * resolved as soon as the image has been loaded. If the function fails 
      * to load the image, the promise is rejected.
      * @param {!string} path - path of the file that should be opened
-     * @returns {!Promise} promise - the promise to be fullfilled
+     * @returns {!Promise} promise - the promise to be fulfilled
      */
     async function fetchImage(path) {
         // Create the promise.
@@ -67,7 +67,7 @@
                 + path + ": " + error
                 );
                 
-                if (count > 0) {                // This is only usefull if this
+                if (count > 0) {                // This is only useful if this
                     count--;                    // this function gets called
                 }                               // from loadResources().
         });
@@ -139,7 +139,7 @@
 
     /**
      * This is a getter-function for the dataMap.
-     * @param {!stirng} key - key of the needed entry
+     * @param {!string} key - key of the needed entry
      * @returns {!(string | HTMLImageElement)} returns the value
      */
     function getDataMap(key) {
@@ -174,7 +174,7 @@
         // For every line in the file.
 	    for (let i = 0; i < lines.length; i++) {
             // Split the line into individual words / numbers.
-		    let parts = lines[i].trim().split(' ');
+		    let parts = lines[i].trim().split(" ");
             // If the line starts with v, the line has vertex positions.
             // Else if the line starts with vn, the line has vertex normals.
             // Else if the line starts with vt, the line has vertex 
@@ -184,32 +184,32 @@
             // Else if the line starts with f, the line has indices for the 
             // positions, normals and texCoords arrays. These are sorted by 
             // vertex. 
-		    if (parts[0] === 'v') {
+		    if (parts[0] === "v") {
                 // Add the position values of the line to the positions array.
 			    positions.push(
 				    parseFloat(parts[1]),
 				    parseFloat(parts[2]),
 				    parseFloat(parts[3])
 			    );
-		    } else if (parts[0] === 'vn') {
+		    } else if (parts[0] === "vn") {
                 // Add the normal values of the line to the normals array.
 			    normals.push(
 				    parseFloat(parts[1]),
 				    parseFloat(parts[2]),
 				    parseFloat(parts[3])
 			    );
-            } else if (parts[0] === 'vt') {
+            } else if (parts[0] === "vt") {
                 // Add the texture coordinate values of the line to the 
                 // texCoords array.
                 texCoords.push(
                     parseFloat(parts[1]),
                     parseFloat(parts[2])
                 );
-		    } else if (parts[0] === 'f') {
+		    } else if (parts[0] === "f") {
                 // For all parts of the line. Every part represents a vertex.
 			    for (let j = 1; j < parts.length; j++) {
                     // Split the part into separate indices.
-				    let indexParts = parts[j].split('/');
+				    let indexParts = parts[j].split("/");
                     // index - 1 because the arrays start at 0 but the .obj 
                     // file starts at 1.
 				    let positionIndex = parseInt(indexParts[0]) - 1;
@@ -244,7 +244,7 @@
      */
     /**
      * This function parses the data for the star signs. For this it needs 
-     * to files as strings: a list of all the stars needed for the starsigns
+     * to files as strings: a list of all the stars needed for the star signs
      * and a list of all the connections between those stars.
      * The list of stars should be of form:
      *      HIP | RAJ2000 | DEJ2000 | distance | x | y | z | Vmag_viz 
@@ -273,15 +273,15 @@
         const sings = new Map();
         const starMap = new Map();
         // Split the list of connections into lines.
-        let lines = connectionData.split('\n');
+        let lines = connectionData.split("\n");
         // For every line of the list of connections.
         for (let i = 1; i < lines.length; i++) {
             // Split the line into its parts.
-            let parts = lines[i].trim().split(',');
+            let parts = lines[i].trim().split(",");
             // If both HIPs are not empty (there are 
             // empty spots in the data that should be
             // skiped).
-            if (parts[1] != '' && parts[2] != '') {
+            if (parts[1] != "" && parts[2] != "") {
                 // If this star sign is not in the star sign map yet, create
                 // a new entry. Else, add the HIPs to the entry of the sign.
                 if (sings.get(parts[3]) === undefined) {
@@ -311,11 +311,11 @@
             }
         }
         // Split the list of stars into lines.
-        lines = data.split('\n');
+        lines = data.split("\n");
         // For every line of the list of stars.
         for (let i = 1; i < lines.length; i++) {
             // Split the line into its parts.
-            let parts = lines[i].trim().split(',');
+            let parts = lines[i].trim().split(",");
             // If there is any sign, which this star is a part of, add it
             // to the array of stars. If there is no such sign, this star
             // is not needed and does not get added to the list of stars.
@@ -371,11 +371,11 @@
         // Array of all sizes.
         let sizes = [];
         // Split the data into lines.
-	    let lines = data.split('\n');
+	    let lines = data.split("\n");
         // For every line.
 	    for (let i = 1; i < lines.length; i++) {
             // Split the line into its parts.
-		    let parts = lines[i].trim().split(',');
+		    let parts = lines[i].trim().split(",");
             // calculate RGB-magnitudes. For more information see
             // https://arxiv.org/pdf/2107.08734.
             const mag = parseFloat(parts[6]);
@@ -415,9 +415,9 @@
             // size values.
             if (
                 parts.length == 10 
-                && parts[7] != 'N/A' 
-                && parts[8] != 'N/A' 
-                && parts[9] != 'N/A'
+                && parts[7] != "N/A" 
+                && parts[8] != "N/A" 
+                && parts[9] != "N/A"
             ) {
                 positions.push([
                     parseFloat(parts[7]),

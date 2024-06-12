@@ -1,15 +1,27 @@
 {
+    // WebGL context.
     /** @type {WebGLRenderingContext} */
-    const gl = getCanvas().getContext('webgl');
+    const gl = getCanvas().getContext("webgl");
+    // Most modern browsers should support webGL, but it is better 
+    // to be safe than sorry.
+    if (!gl) {
+        alert("webgl not supported \n trying experimental");
+        gl = getCanvas().getContext("experimental-webgl");
+    }
+    if (!gl) {
+        alert("the browser does not even support experimental-webgl");
+    }
+
     // This camera allows the user to look around the scene.
     // the class ControllableCamera is defined in camera.js.
     let cam = new ControllableCamera(
         getCanvas(),
-        [0, 200, -200],
+        [0, 200, -300],
         [0, 0, 100],
         [0, 1, 0],
         45 * Math.PI / 180
     );
+
     // The gaia-data. This will be defined at the start of the 
     // scene through the function startScene(). For the scene to 
     // work this should be an array of the form:
@@ -24,6 +36,7 @@
     //                         scaling is the same in all directions.
     // ]
     let gaia;
+
     // Should the camera be updated? 
     // If the camera is not updated, it can not be controlled.
     // Yes:     true
@@ -37,10 +50,12 @@
     // Yes:     true
     // No:      false
     let showConnections = true;
+    
     // Delta-time and variables to calculate delta-time.
     let dt = 0;
     let prevFrameTime = 0;
     let currFrameTime = 0;
+
     // A map with the star sign data. This will be defined at the start of  
     // the scene through the function startScene(). For the scene to work this 
     // should be an map of the form:
@@ -56,16 +71,16 @@
     // Key:     name of the star sign (string)
     // Value:   should this star sign be visible? (bool)
     let signsVisibility = new Map();
-    // The sun of the current solar system. This should be of class Star.
-    // The class Star is defined in celestials.js.
-    let sun;
 
+    // The sun of the current solar system. This should be of class Star.
+    // The class Star is defined in celestial.js.
+    let sun;
     // List of all the objects in the scene that should be rendered with 
-    // light and shadowns. This list is also used to generate The 
+    // light and shadows. This list is also used to generate The 
     // shadowMap-Cube (see renderShaded() and genShadowMap() in render.js).
     let shadedObjects = [];
     // List of all the objects in the background of the scene. These should
-    // be of class BackgroundStar (see celestials.js) and represent the gaia 
+    // be of class BackgroundStar (see celestial.js) and represent the gaia 
     // data (The stars around the scene).
     let backgroundObjects = [];
     // List of all the objects in the scene that should be selectable and 
@@ -86,13 +101,13 @@
     //
     let connectedObjects = new Map();
     // List of all the Connector objects in the scene (for a definition of 
-    // the class Connector see celestials.js). (except star sign connections)
+    // the class Connector see celestial.js). (except star sign connections)
     let connectors = [];
     // List of all the Connector objects in the scene, that make up the 
     // visible star signs.
     let signsConnectors = [];
     // List of all the objects in the scene that build orbits. These are either
-    // of class StaticOrbit or Connector (see celestials.js for more information
+    // of class StaticOrbit or Connector (see celestial.js for more information
     // (especially OrbitingObject.addStaticOrbit() and 
     // OrbitingObject.addDynamicOrbit())).
     let orbits = [];
@@ -120,13 +135,15 @@
         // This swaps the two canvases from the loading screen to the 
         // webGL canvas. The function swapCanvas is defined in render.js.
         swapCanvas();
+        // Make the UI visible;
+        changeUiVisibility();
         // Start the scene. draw() is the main render loop of the scene.
         requestAnimationFrame(draw);
     }
 
     /**
      * This function builds the scene to represent our solar system.
-     * The used classes and class-methods are defined in celestials.js.
+     * The used classes and class-methods are defined in celestial.js.
      * It creates the objects and sets the lists needed for the scene 
      * to be rendered.
      * @todo The sun and objects around the sun use random textures. For a more
@@ -140,10 +157,10 @@
 
         // First define our sun.
         sun = new Star(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(),      // Returns a random texture 
                                 // (see texture.js for the definition).
-                                // This should be replaced by a seperate 
+                                // This should be replaced by a separate 
                                 // texture (see todo).
             [60, 60, 60],
             [0.96, 0.95, 0.77],
@@ -153,7 +170,7 @@
 
         // Mercury.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(),
             [0, 0, 130],        // Relative position to the sun.
             [2.4, 2.4, 2.4],
@@ -161,15 +178,15 @@
             [0.38, 0.21, 0.03],
             [0.86, 0.65, 0.43],
             1,
-            [40 , 10, 80],
-            [10, 10, 10],
+            [0 , 1, 0],
+            [0, 0, 0],
             1,
-            1
+            2
         ).addStaticOrbit();
 
         // Venus.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 170],
             [6, 6, 6],
@@ -177,7 +194,7 @@
             [0.58, 0.20, 0.04],
             [0.91, 0.65, 0.24],
             1,
-            [0, 0, 0],
+            [1, 0, 0],
             [0, 0, 0],
             1,
             1
@@ -185,7 +202,7 @@
 
         // Earth.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 210],
             [6.3, 6.3, 6.3],
@@ -193,16 +210,16 @@
             [0.04, 0.24, 0.26],
             [0.42, 0.77, 0.81],
             1,
-            [10, 0, 0],
+            [0, 1, 0],
             [0, 0, 0],
-            0.5,
-            2
+            1,
+            1
 
         ).addStaticOrbit();
 
         // Our moon (Earth.addObject).
         sun.objects[sun.objects.length-1].addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, -10],
             [2, 2, 2],
@@ -210,15 +227,15 @@
             [0.04, 0.24, 0.26],
             [0.42, 0.77, 0.81],
             1,
-            [40, 0, 30],
-            [0, 0, 0],
+            [2, 0, 1.5],
+            [50, 20, 10],
             1,
-            1
-        ).addStaticOrbit();
+            0.5
+        ).addDynamicOrbit();
 
         // Mars.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 250],
             [3.3, 3.3, 3.3],
@@ -226,7 +243,7 @@
             [0.29, 0.13, 0.15],
             [0.91, 0.50, 0.24],
             1,
-            [0, 0, 0],
+            [0, 0.5, 0.5],
             [0, 0, 0],
             1,
             1
@@ -234,7 +251,7 @@
 
         // Jupiter.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 310],
             [20, 20, 20],
@@ -242,15 +259,15 @@
             [1,1,1],
             [1,1,1],
             1,
+            [3, 1, -0.3],
             [0, 0, 0],
-            [0, 0, 0],
-            1,
-            1
+            0.3,
+            0.5
         ).addDynamicOrbit();
 
         // Saturn.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 370],
             [18, 18, 18],
@@ -258,15 +275,15 @@
             [0.43, 0.38, 0.28],
             [0.87, 0.72, 0.44],
             1,
+            [1, 0, 0],
             [0, 0, 0],
-            [0, 0, 0],
-            1,
-            1
+            0.5,
+            0.5
         ).addDynamicOrbit();
 
         // Uranus.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 410],
             [9, 9, 9],
@@ -274,7 +291,7 @@
             [0.04, 0.25, 0.33],
             [0.55, 0.81, 0.82],
             1,
-            [0, 0, 0],
+            [0, 1, 0],
             [0, 0, 0],
             1,
             1
@@ -282,7 +299,7 @@
 
         // Neptune.
         sun.addObject(
-            getModel('sphere'),
+            getModel("sphere"),
             randTexture(), 
             [0, 0, 450],
             [8.5, 8.5, 8.5],
@@ -290,7 +307,7 @@
             [0.11, 0.37, 0.66],
             [0.74, 0.88, 0.95],
             1,
-            [0, 0, 0],
+            [0.5, 0.5, 0],
             [0, 0, 0],
             1,
             1
@@ -304,7 +321,7 @@
         orbits = objects[1];
         
         // Fill the list of backgroundObjects with BackgroundStars 
-        // (celestials.js) representing the stars in the gaia dataset.
+        // (celestial.js) representing the stars in the gaia dataset.
         let position;
         let direction;
         for (let i = 0; i < gaia[0].length-1; i++) {
@@ -318,7 +335,7 @@
             vec3.normalize(direction, direction);
             vec3.scale(direction, direction, 2000);
             vec3.add(position, position, direction);
-            // Add the new BackgroundStar (celestials.js) to the 
+            // Add the new BackgroundStar (celestial.js) to the 
             // list of backgroundObjects.
             backgroundObjects.push(new BackgroundStar(
                 cam,
@@ -413,13 +430,13 @@
         }
         
         // All objects in the scene should be clickable.
-        // Call renderClickable in render.js.
+        // Call selectObject in render.js.
         if (clickable) {
             clickableObjects = shadedObjects.concat(solidObjects);
-            genIdMap(clickableObjects, cam);
+            selectObject(clickableObjects, cam);
         }
 
-        // Finaly, render all the objects to the canvas.
+        // Finally, render all the objects to the canvas.
         if (solidObjects.length + shadedObjects.length > 0) {
             render(solidObjects, shadedObjects, cam);
         }
@@ -436,7 +453,7 @@
     // Helper variable for addConnector.
     let star1 = null;
     /**
-     * This function adds a Connector object (celestials.js) between a given 
+     * This function adds a Connector object (celestial.js) between a given 
      * backgroundObject and star1. If Star1 == null, the given object is set
      * as Star1 instead.
      * @param {!number} index - index of the object to be connected 
@@ -549,7 +566,7 @@
         camUpdate = false;
         // Set all objects so that they are neither clickable nor selectable.
         clickable = false;
-        unselectStar(); // Make sure nothing is selected anymore.
+        unselectObject(); // Make sure nothing is selected anymore.
         // Set all connections to be invisible.
         showConnections = false;
 
@@ -652,7 +669,7 @@
         } else {
             // Create the new sun.
             sun = new Star(
-                getModel('sphere'), 
+                getModel("sphere"), 
                 tex,
                 [60, 60, 60],
                 newSun.ambColor,
@@ -675,7 +692,7 @@
                 scale = Math.random() * 30 + 10; // Min: 10 | Max: 40
                 // Add the new orbiting object.
                 sun.addObject(
-                    getModel('sphere'),
+                    getModel("sphere"),
                     randTexture(),
                     [0, 0, dist],
                     [scale, scale, scale],
@@ -716,7 +733,7 @@
                 // Decide randomly, if the new object should have a moon.
                 if (Math.round(Math.random()) == 1) {
                     sun.objects[sun.objects.length-1].addObject(
-                        getModel('sphere'),
+                        getModel("sphere"),
                         randTexture(),
                         // Match the relative position of the moon 
                         // to the scaling of the object.
@@ -771,7 +788,7 @@
             // Reset the list of connectors.
             connectors = [];
             // Fill the list of backgroundObjects with BackgroundStars 
-            // (celestials.js) representing the stars in the gaia dataset
+            // (celestial.js) representing the stars in the gaia dataset
             // with the new sun as the origin.
             backgroundObjects = [];
             // Position of the new sun.
@@ -791,7 +808,7 @@
                     vec3.normalize(direction, direction);
                     vec3.scale(direction, direction, 2000);
                     vec3.add(position, position, direction);
-                    // Add the new BackgroundStar (celestials.js) to the
+                    // Add the new BackgroundStar (celestial.js) to the
                     // list of backgroundObjects.
                     backgroundObjects.push(new BackgroundStar(
                         cam,
@@ -911,7 +928,7 @@
                             vec3.scale(this.scale, this.scale, 4);
                             this.scale[1] /= 4;
                         };
-                        // Change the unselection function of the Connector.
+                        // Change the unselect function of the Connector.
                         newConnector.unselect = function () {
                             vec3.scale(this.scale, this.scale, 1/4);
                             this.scale[1] *= 4;

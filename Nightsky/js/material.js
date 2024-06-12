@@ -21,7 +21,7 @@ class Material {
 
 /**
  * @global
- * Two baisc materials. This is a global constant, so it can be used easily 
+ * Two basic materials. This is a global constant, so it can be used easily 
  * from outside this file. amb only uses ambient colors, while all uses all
  * three coefficients.
  */

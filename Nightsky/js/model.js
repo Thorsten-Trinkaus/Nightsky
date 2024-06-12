@@ -39,7 +39,7 @@
     // Add a model with no vertices. This model should be returned by 
     // getModel(), if there is no model that matches the parameter of 
     // getModel().
-    models.set('empty', []);
+    models.set("empty", []);
 
     /**
      * Getter function for the models map.
@@ -52,7 +52,7 @@
         // Return the model with no vertices, if there is no model with 
         // this name.
         if (models.get(name) === undefined) {
-            return models.get('empty');
+            return models.get("empty");
         }
         // Else, return the needed model.
         return models.get(name);

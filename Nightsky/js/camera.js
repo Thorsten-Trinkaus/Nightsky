@@ -62,19 +62,19 @@ class Camera {
         let worldDown = vec3.clone(this.worldUp);
         vec3.negate(worldDown, worldDown);
         const check1 = (
-            // The camera is still allowed to turn in positiv 
+            // The camera is still allowed to turn in positive 
             // vertical direction.
             Math.acos(vec3.dot(this.z, this.worldUp)) > Math.PI/18 
             || 
-            // Or, the camera will not be turned in positiv vertical direction.
+            // Or, the camera will not be turned in positive vertical direction.
             rad / Math.abs(rad) == -1
         );
         const check2 = (
-            // The camera is still allowed to turn in negativ 
+            // The camera is still allowed to turn in negative 
             // vertical direction.
             Math.acos(vec3.dot(this.z, worldDown)) > Math.PI/18 
             || 
-            // Or, the camera will not be turned in negativ vertical direction.
+            // Or, the camera will not be turned in negative vertical direction.
             rad / Math.abs(rad) == 1
         );
         // If both checks are good, rotate the z axis of the camera around the 
@@ -277,7 +277,7 @@ class ControllableCamera extends Camera {
 
     /**
      * This function is called by the keydown event listener.
-     * @param {!Event} e - the event
+     * @param {!Event} e - the event happening
      */
     onKeyDown(e) {
         // Set the KeyValues based on the pressed key.
@@ -320,7 +320,7 @@ class ControllableCamera extends Camera {
 
     /**
      * This function is called by the keyup event listener.
-     * @param {!Event} e - the event
+     * @param {!Event} e - the event happening
      */
     onKeyUp(e) {
         // Set the KeyValues based on the unpressed key.
@@ -363,7 +363,7 @@ class ControllableCamera extends Camera {
 
     /**
      * This function is called by the mousedown event listener.
-     * @param {!Event} e - the event
+     * @param {!MouseEvent} e - the mouse event happening
      */
     onMouseDown(e) {
         // Set the Mouse KeyValue to true, if the left mouse button is pressed.
@@ -374,7 +374,7 @@ class ControllableCamera extends Camera {
 
     /**
      * This function is called by the mouseup event listener.
-     * @param {!Event} e - the event
+     * @param {!MouseEvent} e - the mouse event happening
      */
     onMouseUp(e) {
         // Set the Mouse KeyValue to true, if the left mouse button 
@@ -402,7 +402,7 @@ class ControllableCamera extends Camera {
 
     /**
      * This function is called by the mousemove event listener.
-     * @param {!Event} e - event
+     * @param {!MouseEvent} e - the mouse event happening
      */
     onMouseMove(e) {
         // Is the mouse button pressed and the mouse cursor is over the canvas?
