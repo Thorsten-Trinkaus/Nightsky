@@ -607,8 +607,6 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
 
                 // Render the object. It will be rendered to the i-th face of 
                 // the cube map.
-                
-                console.log(i, objectsWithShadows);
                 gl.drawArrays(
                     gl.TRIANGLES,                                // use 
                                                                  // Triangles.

@@ -1,16 +1,24 @@
+/* Vertex shader for the program to render objects with a solid color. */
+
+// Medium precision for floats.
 precision mediump float;
 
-attribute vec3 position;
-attribute vec2 texCoord;
+/* Attributes */
+attribute vec3 position; // Vertex position.
+attribute vec2 texCoord; // Texture coordinates.
 
-uniform mat4 mWorld;
-uniform mat4 mView;
-uniform mat4 mProj;
+/* Uniforms */
+uniform mat4 mWorld; // World matrix. 
+uniform mat4 mView;  // View matrix.
+uniform mat4 mProj;  // Projection matrix.
 
-varying vec2 vertTexCoord;
+/* Varying */
+varying vec2 vertTexCoord; // Vertex texture coordinates.
 
+/* main function */
 void main() {
-    vec4 vertCoord4 = mWorld * vec4(position, 1.0);
+    // Pass the texture coordinates to the fragment shader.
     vertTexCoord = texCoord;
-    gl_Position = mProj * mView * vertCoord4;
+    // Transform and set vertex position.
+    gl_Position = mProj * mView * mWorld * vec4(position, 1.0);
 }

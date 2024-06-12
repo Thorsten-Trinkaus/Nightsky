@@ -701,17 +701,10 @@
                     [Math.random(), Math.random(), Math.random()],
                     1,
                     [
-                        // Rotation amount. Min: 0 dec | Max: 90 dec
-                        Math.random() * 90
-                        * 
-                        // Rotation direction (1 or -1).
-                        Math.pow(-1, Math.round(Math.random())),
-                        Math.random() * 90
-                        * 
-                        Math.pow(-1, Math.round(Math.random())),
-                        Math.random() * 90
-                        * 
-                        Math.pow(-1, Math.round(Math.random()))
+                        // Angular momentum. Min: 0 | Max: 2
+                        Math.random() * 2,
+                        Math.random() * 2,
+                        Math.random() * 2
                     ],
                     [
                         // Rotation amount. Min: 0 dec | Max: 5 dec
@@ -726,7 +719,7 @@
                         * 
                         Math.pow(-1, Math.round(Math.random()))
                     ],
-                    Math.random() * 2 + 0.5, // rotSpeed. Min: 0.5 | Max: 2.5
+                    Math.random() * 1 + 0.5, // rotSpeed. Min: 0.5 | Max: 1.5
                     Math.random() * 2 + 1,   // orbitSpeed Min: 0.5 | Max: 2.5
                 ).addDynamicOrbit(); // Add the orbit.
 
@@ -746,17 +739,10 @@
                         [Math.random(), Math.random(), Math.random()],
                         1,
                         [
-                            // Rotation amount. Min: 0 dec | Max: 90 dec
-                            Math.random() * 90                    
-                            * 
-                            // Rotation direction (1 or -1).
-                            Math.pow(-1, Math.round(Math.random())),
-                            Math.random() * 90
-                            * 
-                            Math.pow(-1, Math.round(Math.random())),
-                            Math.random() * 90
-                            * 
-                            Math.pow(-1, Math.round(Math.random()))
+                            // Angular momentum. Min: 0 | Max: 2
+                            Math.random() * 2,
+                            Math.random() * 2,
+                            Math.random() * 2
                         ],
                         [
                             // Rotation amount. Min: 0 dec | Max: 20 dec
@@ -771,8 +757,8 @@
                             * 
                             Math.pow(-1, Math.round(Math.random()))
                         ],
-                        // rotSpeed. Min: 0.5 | Max: 2.5
-                        Math.random() * 2 + 0.5, 
+                        // rotSpeed. Min: 0.5 | Max: 1.5
+                        Math.random() * 1 + 0.5, 
                         // orbitSpeed Min: 1 | Max: 3
                         Math.random() * 2 + 1
                     ).addDynamicOrbit(); // Add the orbit.

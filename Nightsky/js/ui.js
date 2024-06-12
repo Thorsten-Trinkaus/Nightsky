@@ -187,7 +187,7 @@
             // user and abort. Also check if the indices are in the
             // range of possible indices. If not, alert the user and
             // abort.
-            if (!(i%3 == 0 && regExpression.test(parts[i]))) {
+            if (!(i%3 == 0 || regExpression.test(parts[i]))) {
                 alert("invalid input");
                 return; 
             }

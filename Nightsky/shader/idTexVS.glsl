@@ -1,9 +1,18 @@
-precision mediump float;
-attribute vec3 vertPos;
-uniform mat4 mProj;
-uniform mat4 mView;
-uniform mat4 mWorld;
+/* Vertex shader for the selection program. */
 
+// Medium precision for floats.
+precision mediump float;
+
+/* Attributes */
+attribute vec3 position; // Vertex position in object space.
+
+/* Uniforms */
+uniform mat4 mProj;	 // Projection matrix.
+uniform mat4 mView;	 // View matrix.
+uniform mat4 mWorld; // World matrix.
+
+/* main function */
 void main() {
-	gl_Position = mProj * mView * mWorld * vec4(vertPos, 1.0);
+	// Transform and set the vertex position.
+	gl_Position = mProj * mView * mWorld * vec4(position, 1.0);
 }
