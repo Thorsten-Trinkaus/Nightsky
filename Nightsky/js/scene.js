@@ -644,7 +644,7 @@
             // The angle is multiplied for a smoother animation.
             cam.angle *= 0.85;
             // Sleep for 1 millisecond.
-            await sleep(1);
+            await sleep(10);
         }
 
         // Finalize the current camera (removes the event listener) and
