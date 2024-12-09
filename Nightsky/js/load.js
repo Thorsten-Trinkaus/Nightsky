@@ -340,6 +340,9 @@
      */
     /**
      * This function parses the gaia data given as a string.
+     * This function is deprecated. The new function parseStarData() 
+     * provides better color values.
+     * 
      * The data should be of form:
      *      source_id | ra | dec | pseudocolour | bp_rp 
      *      -------------------------------------------
@@ -360,7 +363,7 @@
      * @param {!string} data - gaia data as string
      * @returns {![positions, colors, number[]]} returns the values in an array
      */
-    function parseStarData(data) {
+    function parseStarDataOld(data) {
         // Array of all positions.
 	    let positions = [];
         // Array of all color values.
@@ -418,6 +421,9 @@
                 && parts[7] != "N/A" 
                 && parts[8] != "N/A" 
                 && parts[9] != "N/A"
+                && r >= 0
+                && g >= 0
+                && b >= 0
             ) {
                 positions.push([
                     parseFloat(parts[7]),
@@ -431,7 +437,178 @@
                  * magnitudes. Currently all objects are pretty bright,
                  * because nearly all magnitudes are larger than 5.
                  */
-                colors.push([r/5, g/5, b/5]);
+                r = Math.pow(10, -0.4 * r);
+                g = Math.pow(10, -0.4 * g);
+                b = Math.pow(10, -0.4 * b);
+                if (r > maxR) {
+                    maxR = r;
+                }
+                if (g > maxG) {
+                    maxG = g;
+                }
+                if(b > maxB) {
+                    maxB = b;
+                }
+                colors.push([r,g,b]);
+                // In its current version, this function assigns the same
+                // size to all objects. One could for example change this 
+                // to size objects smaller the further they are away from 
+                // the center.
+                sizes.push(5);
+            }
+	    }
+        console.log(maxR,maxG,maxB)
+        for (let i = 0; i < colors.length; i++) {
+            colors[i][0] = Math.pow(colors[i][0] / maxR, 1/20);
+            colors[i][1] = Math.pow(colors[i][1] / maxG, 1/20);
+            colors[i][2] = Math.pow(colors[i][2] / maxB, 1/20);
+            console.log(colors[i][0] * 255,colors[i][1] * 255,colors[i][2] * 255)
+        }
+        
+        // Return the array of position, color and size values.
+        return [positions, colors, sizes];
+    }
+
+    /**
+     * @typedef {[number, number, number][]} positions
+     * @typedef {[number, number, number][]} colors
+     */
+    /**
+     * This function parses the gaia data given as a string.
+     * 
+     * The data should be of form:
+     *      source_id | ra | dec | pseudocolour | bp_rp 
+     *      -------------------------------------------
+     *      dist | gmag | x | y | z
+     *      -----------------------
+     * The function returns an array of all the position, color and 
+     * size values. The resulting array has the form:
+     * [
+     *      positions: [number, number, number][] - Positions of the
+     *                                              objects in the dataset
+     *                                              in xyz-coordinates.
+     *      colors: [number, number, number][] - Colors of the objects
+     *                                           in the dataset in rgb.
+     *      sizes:  number[] - Scaling of the objects in the dataset in 
+     *                         xyz-direction. Only 1 number, because the
+     *                         scaling is the same in all directions.
+     * ]
+     * @param {!string} data - gaia data as string
+     * @returns {![positions, colors, number[]]} returns the values in an array
+     */
+    function parseStarData(data) {
+        // Array of all positions.
+        let positions = [];
+        // Array of all color values.
+        let colors = [];
+        // Array of all sizes.
+        let sizes = [];
+
+        // Variables for computing color values.
+        let r, g, b;
+        let tEff;
+
+        // Split the data into lines.
+        let lines = data.split("\n");
+
+        // For every line.
+        for (let i = 1; i < lines.length; i++) {
+            // Split the line into its parts.
+            let parts = lines[i].trim().split(",");
+
+            ///////////////////////////
+            // Calculate RGB-values. //
+            ///////////////////////////
+
+            // (BP-RP) gaia color index.
+            const bp_rp = parseFloat(parts[4]);
+
+            // Convert the gaia color index to the effective Temperature of
+            // the star. This implements the equation introduced by 
+            // Jordi et. al. (2010) https://arxiv.org/abs/1008.0815
+            // As they state in their paper, this method only works for stars 
+            // with a bp_rp color index < 1.5. For values greater 1.5, I used 
+            // the same approach as GaiaSky 
+            // https://zah.uni-heidelberg.de/gaia/outreach/gaiasky by using 
+            // linear interpolation for mapping the index to a effective 
+            // temperature. 
+            if (bp_rp >= 1.5) {
+                tEff = 3521.6 + ((3000 - 3521.6) / (15 - 1.5)) * (bp_rp - 1.5);
+            } else {
+                tEff = Math.pow(
+                    10, 
+                    3.999 - 
+                    0.654 * bp_rp + 0.709 * Math.pow(bp_rp, 2) - 
+                    0.316 * Math.pow(bp_rp, 3)
+                );
+            }
+            tEff /= 100;
+
+            // The effective color given in (1/100) Kelvin can be converted 
+            // to rgb values. For this I used Tanner Helland's algorithm 
+            // https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html
+            // for converting Kelvin to rgb color values.
+
+            // r
+            if (tEff <= 66) {
+                r = 255;
+            } else {
+                r = tEff - 60;
+                r = 329.698727446 * Math.pow(r, -0.1332047592);
+                if (r < 0) {
+                    r = 0;
+                } else if (r > 255) {
+                    r = 255;
+                }
+            }
+
+            // g
+            if (tEff <= 66) {
+                g = tEff;
+                g = 99.4708025861 * Math.log(g) - 161.1195681661;
+            } else {
+                g = tEff - 60;
+                g = 288.1221695283 * Math.pow(g, -0.0755148492);
+            }
+            if (g < 0) {
+                g = 0;
+            } else if (g > 255) {
+                g = 255;
+            }
+
+            // b
+            if (tEff >= 66) {
+                b = 255;
+            } else if (tEff <= 19) {
+                b = 0;
+            } else {
+                b = tEff - 10;
+                b = 138.5177312231 * Math.log(b) - 305.0447927307;
+                if (b < 0) {
+                    b = 0;
+                } else if (b > 255) {
+                    b = 255;
+                }
+            }
+
+            // Add position values for the object, if there is information 
+            // about its position in the gaia data. Missing position data
+            // should be marked as "N/A" in the gaia data. If the data is
+            // missing, we ignore the object. Else, we also add color and 
+            // size values.
+            if (
+                parts.length == 10 
+                && parts[7] != "N/A" 
+                && parts[8] != "N/A" 
+                && parts[9] != "N/A"
+            ) {
+                positions.push([
+                    parseFloat(parts[7]),
+                    parseFloat(parts[8]),
+                    parseFloat(parts[9])
+                ]);
+
+                colors.push([r/255, g/255, b/255]);
                 // In its current version, this function assigns the same
                 // size to all objects. One could for example change this 
                 // to size objects smaller the further they are away from 
@@ -439,7 +616,7 @@
                 sizes.push(5);
             }
         
-	    }
+        }
         // Return the array of position, color and size values.
         return [positions, colors, sizes];
     }

@@ -632,15 +632,16 @@ class OrbitingObject extends CelestialBody {
             0 : (1 / 200) * (speed * this.orbitSpeed * Math.PI / r);
         // Get the current angle of the position on the orbit.
         let phi = Math.atan2(
-            this.position[0], 
-            this.position[2]
+            this.position[2],
+            this.position[0] 
+            
         );
         // Calculate the new angle on the orbit and set the new position.
         phi = (phi + time * w) % (2 * Math.PI);
         this.position = vec3.fromValues(
-            r * Math.sin(phi),
+            r * Math.cos(phi),
             0,
-            r * Math.cos(phi)
+            r * Math.sin(phi)
         );
         // Update the rotation of this object around itself.
         quat.rotateX(
