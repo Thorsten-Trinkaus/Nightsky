@@ -1,0 +1,7 @@
+# Run Nightsky
+
+There are two ways to access this project.
+
+1. I deployed the project as a static webpage using GitHub pages at https://thorsten-trinkaus.github.io/Nightsky/
+
+2. You can run the project locally, by running the run.sh script. Make sure you have Node.js and http-server installed.

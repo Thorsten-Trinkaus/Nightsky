@@ -1,0 +1,211 @@
+body {
+    margin: 0px;
+    overflow: hidden;
+}
+
+.title {
+    color: #d35944;
+    text-shadow: #d35944 1px 1px;
+    text-align: right;
+    font: small-caps bold 25px/1 sans-serif;
+    text-overflow: clip;
+}
+
+.content {
+    color: #FDE6B0;
+    text-shadow: #d35944 2px 2px;
+    text-align: center;
+    align-self: center;
+    font: small-caps bold 20px/1 sans-serif;
+    text-overflow: clip;
+}
+
+.contentList {
+    color: #FDE6B0;
+    text-shadow: #d35944 2px 2px;
+    text-align: center;
+    align-self: center;
+    text-transform: uppercase;
+    font: bold 20px/1 sans-serif;
+    text-overflow: clip;
+}
+
+.uiDiv {
+    position:fixed;
+    background-color: #1D2B36;
+    width: max-content;
+    padding: 15px;
+}
+
+#controls {
+    z-index: -1;
+    top: 10px;
+    left: 10px;
+}
+
+#info {
+    z-index: -1;
+    bottom: 10px;
+    left: 10px;
+}
+
+#starSign {
+    z-index: -1;
+    top: 10px;
+    right: 10px;
+}
+
+#infoText {
+    color: #FDE6B0;
+    text-shadow: #D35944 2px 2px;
+    white-space: pre-line;
+}
+
+#canvasWrapper {
+    position: fixed;
+    margin: 0px;
+}
+
+#canvScene {
+    z-index: 1;
+    position: absolute;
+}
+
+#canvLoading {
+    z-index: 2;
+    position: absolute;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    background-color: inherit;
+    transition: transform .3s ease-in-out;
+    width: 25px;
+    height: 25px;
+
+}
+button:hover {
+    transform: scale(1.5,1.5);
+    
+}
+
+#impStarSignText {
+    margin-top: 15px;
+    border: 2px solid;
+    width:  max-content;
+    height: 25px;
+    color: #D35944;
+    font: small-caps bold 20px/1 sans-serif;
+    text-align: center;
+    background-color: inherit;
+    border-radius: 6px;
+}
+
+#impStarSign {
+    margin-right: 14px;
+}
+#impStarSign:hover {
+    transform: rotate(360deg);
+}
+
+#expStarSign {
+    margin-right: 14px;
+}
+#expStarSign:hover {
+    transform: rotate(360deg);
+}
+
+.btn {
+    width: 15px;
+    height: 15px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80%;
+    height: 10px;
+    border-radius: 10px;  
+    background: #D35944;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%; 
+    background: #FDE6B0;
+    cursor: pointer;
+    transition: transform .3s ease-in-out;
+}
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.5,1.5);
+}
+.slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%; 
+    background: #FDE6B0;
+    cursor: pointer;
+    transition: transform .3s ease-in-out;
+}
+.slider::-moz-range-thumb:hover {
+    transform: scale(1.5,1.5);
+}
+
+#color {
+    opacity: 0;
+    width: 64px;
+    height: 25px;
+}
+
+#colorWrapper {
+    border-radius: 20%;
+    border-style: solid;
+    border-width:5px;
+    border-color: #FDE6B0;
+    display: inline-block;
+    margin-left: 20px;
+}
+
+#signList {
+    opacity: 0;
+    margin-left: 10px;
+    height:200px; width: max-content;
+    padding-right: 20px;
+    overflow:hidden; overflow-y:scroll;
+    list-style-type:none;
+    font-size: 30px
+}
+
+::-webkit-scrollbar {
+    width: 20px;
+}
+::-webkit-scrollbar-track {
+    border-radius: 10px;  
+    background: #D35944;
+}
+::-webkit-scrollbar-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%; 
+    background: #FDE6B0;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    background-color: none;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #FDE6B0;
+    border-radius: 50%;
+}
+input[type="checkbox"]:checked {
+    background-color: #D35944;
+}
