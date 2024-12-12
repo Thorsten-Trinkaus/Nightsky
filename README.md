@@ -34,4 +34,4 @@ There are two ways to access Nightsky:
 
 2. If you somehow want to run this project locally, you can use the provided ***[run.sh](run.sh)*** script. This method needs ***[Node.js](https://nodejs.org/en)*** and ***[http-server](https://www.npmjs.com/package/http-server)*** to be installed.
 
-The ***[report](./report/report.pdf)*** for this practical is also available.
+The ***[report](./report/Report.pdf)*** for this practical is also available.
