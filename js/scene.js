@@ -904,7 +904,7 @@
                             backgroundObjects[index1],
                             backgroundObjects[index2],
                             15,
-                            [0.4, 0.1, 0.9],
+                            [0.82, 0.25, 0.25],
                             1
                         );
                         // Make the Connector not clickable.
