@@ -129,7 +129,7 @@ function main() {
         index = gaia[0].length;
         // Add the i-th star to the gaia data.
         gaia[0].push(stars[i][1]);
-        gaia[1].push([0.4, 0.1, 0.9]);
+        gaia[1].push([0.82, 0.25, 0.25]);
         gaia[2].push(5);
         // Get all the star signs with the i-th star.
         signsList = starMap.get(stars[i][0]);
