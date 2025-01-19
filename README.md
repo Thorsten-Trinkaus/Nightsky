@@ -32,6 +32,18 @@ There are two ways to access Nightsky:
 
 1. I deployed the project as a static webpage using GitHub Pages at ***[Nightsky](https://thorsten-trinkaus.github.io/Nightsky/)***
 
-2. If you somehow want to run this project locally, you can use the provided ***[run.sh](run.sh)*** script. This method needs ***[Node.js](https://nodejs.org/en)*** and ***[http-server](https://www.npmjs.com/package/http-server)*** to be installed.
+2. If you somehow want to run this project locally, you can use Node.js:
+```
+git clone https://github.com/Thorsten-Trinkaus/Nightsky.git
+```
+```
+cd Nightsky
+```
+```
+npm install
+```
+```
+npm run start
+```
 
 The ***[report](./report/Report.pdf)*** for this practical is also available.
