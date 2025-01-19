@@ -130,7 +130,7 @@ function main() {
         // Add the i-th star to the gaia data.
         gaia[0].push(stars[i][1]);
         gaia[1].push([0.82, 0.25, 0.25]);
-        gaia[2].push(5);
+        gaia[2].push(7);
         // Get all the star signs with the i-th star.
         signsList = starMap.get(stars[i][0]);
         for (let j = 0; j < signsList.length; j++) {

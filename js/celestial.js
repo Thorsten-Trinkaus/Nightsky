@@ -956,7 +956,7 @@ class Connector extends CelestialBody {
                                     // which gets scaled to the needed length.
             null,                   // Uses no texture.
             [0,0,0],                // Position is set after the super.
-            [2,0,2],              // Length (y-scale) is set after the super.
+            [3,0,3],              // Length (y-scale) is set after the super.
             basicMaterials.amb, 
             color, 
             color, 

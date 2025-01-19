@@ -454,7 +454,7 @@
                 // size to all objects. One could for example change this 
                 // to size objects smaller the further they are away from 
                 // the center.
-                sizes.push(5);
+                sizes.push(7);
             }
 	    }
         console.log(maxR,maxG,maxB)
@@ -613,7 +613,7 @@
                 // size to all objects. One could for example change this 
                 // to size objects smaller the further they are away from 
                 // the center.
-                sizes.push(5);
+                sizes.push(7);
             }
         
         }

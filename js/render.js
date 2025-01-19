@@ -142,48 +142,6 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
     // Texture coordinate along the t axis (vertical direction) that are
     // outside the range will be clamped to the edge of the texture.
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // Specify the 2D texture.
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,                  // Base image level.
-        gl.RGBA,            // RGBA color component.
-        canvScene.width,    // Texture width.
-        canvScene.height,   // Texture height.
-        0,                  // Border must be 0.
-        gl.RGBA,            // Format of the texture data. With WebGL 1 this
-                            // must be the same as the color component.
-        gl.UNSIGNED_BYTE,   // 1 byte for each channel of the color component.
-        null                // There is no image linked to this texture.
-    );
-
-    // Specify the frame- and renderbuffer used for the generation 
-    // of the idTexture.
-    gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
-    // Create and initializes the data storage of the renderbuffer.
-    gl.renderbufferStorage(
-        gl.RENDERBUFFER,    
-        gl.DEPTH_COMPONENT16,   // Internal format for the renderbuffer
-                                // will be 16 depth bits per pixel.
-        canvScene.width,        // Width of the renderbuffer in pixel.
-        canvScene.height        // Height of the renderbuffer in pixel.
-    );
-    // Attach the idTexture to the framebuffer.
-    gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,   // Attaches the texture to the color buffer.
-        gl.TEXTURE_2D,          // 2D texture.
-        idTexture,
-        0                       // Mipmap Level of the texture image.
-                                // Must be 0.
-    );
-    // Attach the renderbuffer to the framebuffer.
-    gl.framebufferRenderbuffer(
-        gl.FRAMEBUFFER,
-        gl.DEPTH_ATTACHMENT,    // Attach it to the depth buffer.
-        gl.RENDERBUFFER,
-        idTexRenderbuffer
-    );
 
     // Bind the shadowCubeMap texture and set its parameter.
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowCubeMap);
@@ -333,14 +291,64 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
      * @param {!Camera} cam - camera of the scene
      */
     function selectObject(clickableObjects, cam) {
+
+        // Make sure there is something to render.
+        if (clickableObjects.length == 0) {
+            return;
+        }
+
         // Tell webGL to use the right program.
         gl.useProgram(selectProgram);
 
         // Bind the texture to which the objects are to be rendered.
         gl.bindTexture(gl.TEXTURE_2D, idTexture);
-        // Bind the needed buffers.
+
+        // The next steps are done here, because they depend on the
+        // current canvas width and height.
+
+        // Specify the 2D texture.
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,                  // Base image level.
+            gl.RGBA,            // RGBA color component.
+            canvScene.width,    // Texture width.
+            canvScene.height,   // Texture height.
+            0,                  // Border must be 0.
+            gl.RGBA,            // Format of the texture data. For WebGL 1 this
+                                // must be the same as the color component.
+            gl.UNSIGNED_BYTE,   // 1 byte for each channel of the 
+                                // color component.
+            null                // There is no image linked to this texture.
+        );
+
+        // Specify the frame- and renderbuffer used for the generation 
+        // of the idTexture.
         gl.bindFramebuffer(gl.FRAMEBUFFER, idTexFramebuffer);
         gl.bindRenderbuffer(gl.RENDERBUFFER, idTexRenderbuffer);
+        // Create and initializes the data storage of the renderbuffer.
+        gl.renderbufferStorage(
+            gl.RENDERBUFFER,    
+            gl.DEPTH_COMPONENT16,   // Internal format for the renderbuffer
+                                    // will be 16 depth bits per pixel.
+            canvScene.width,        // Width of the renderbuffer in pixel.
+            canvScene.height        // Height of the renderbuffer in pixel.
+        );
+        // Attach the idTexture to the framebuffer.
+        gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.COLOR_ATTACHMENT0,   // Attache the texture to the color buffer.
+            gl.TEXTURE_2D,          // 2D texture.
+            idTexture,
+            0                       // Mipmap Level of the texture image.
+                                    // Must be 0.
+        );
+        // Attach the renderbuffer to the framebuffer.
+        gl.framebufferRenderbuffer(
+            gl.FRAMEBUFFER,
+            gl.DEPTH_ATTACHMENT,    // Attach it to the depth buffer.
+            gl.RENDERBUFFER,
+            idTexRenderbuffer
+        );
 
         // Set the viewport to the size of the canvas.
         gl.viewport(0, 0, canvScene.width, canvScene.height);
@@ -504,6 +512,16 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
      *      or on which shadows are to be cast
      */
     function genShadowMap(objectsWithShadows) {
+
+        // Make sure there is something to render.
+        if (objectsWithShadows.length == 0) {
+            console.warn(
+                "There always needs to be a Star "
+                + "object when using genShadowMap!"
+            );
+            return;
+        }
+
         // Tell webGL to use the right program.
         gl.useProgram(shadowGenProgram);
 
@@ -667,6 +685,12 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
      * @param {!Camera} cam - the camera of the scene
      */
     function renderSolid(objectsToRender, cam) {
+
+        // Make sure there is something to render.
+        if (objectsToRender.length == 0) {
+            return;
+        }
+
         // Tell webGL to use the right program.
         gl.useProgram(renderSolidProgram);
 
@@ -776,6 +800,12 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
      * @param {!Camera} cam - the camera of the scene
      */
     function renderShaded(objectsToRender, cam) {
+
+        // Make sure there is something to render.
+        if (objectsToRender.length == 0) {
+            return;
+        }
+
         // Tell webGL to use the right program.
         gl.useProgram(renderShadedProgram);
 

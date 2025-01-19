@@ -33,21 +33,25 @@
     let speed = speedSlider.value;
     speedText.textContent = speed;
     
-    // text input for importing a list of connections between stars
+    // Text input for importing a list of connections between stars.
     const impInput = document.getElementById("impStarSignText");
-    // button to start the import
+    // Button to start the import.
     const impButton = document.getElementById("impStarSign");
     impButton.onclick = onImport.bind(this);
     
-    // button to copy the current connection to the clipboard
+    // Button to copy the current connection to the clipboard.
     const expButton = document.getElementById("expStarSign");
     expButton.onclick = onExport.bind(this);
     
-    // color picker for coloring new connections
+    // Color picker for coloring new connections.
     const colorPicker = document.getElementById("color");
     const colorPickerWrapper = document.getElementById("colorWrapper");
     colorPicker.onchange = onColorChange.bind(this);
     onColorChange();
+
+    // Show All checkbox.
+    const showAllBox = document.getElementById("showAll");
+    showAllBox.onclick = showAllSigns.bind(this);
 
     /**
      * This function toggles the visibility of the ui.
@@ -329,9 +333,15 @@
             // Change the parameter of the checkbox.
             checkBox.type = "checkbox";
             checkBox.name = starSigns[i];
-            checkBox.onclick = function () {
-                changeSigns(checkBox.name); // This is defined in scene.js.
-            }
+            checkBox.addEventListener("change", (e) => {
+                // Checkboxes should only change if showAllBox is unchecked.
+                if (showAllBox.checked && !checkBox.checked) {
+                    checkBox.checked = true;
+                } else {
+                    changeSigns(checkBox.name); // This is defined in scene.js.
+                }
+                
+            });
             // Create a text element for the lost element.
             const signText = document.createElement("text");
             // Create the text content for the text element.
@@ -347,5 +357,34 @@
         
         // Make the list visible.
         signList.style.opacity = "1";
+    }
+
+    /**
+     * This function checks all checkboxes in the signList. If it is called
+     * and all boxes are already checked, it unchecks them. The function
+     * is called by the onchange event listener of the "showAllBox" checkbox.
+     */
+    function showAllSigns() {
+        // All checkboxes in the signList.
+        const checkboxesWithName = document.querySelectorAll(
+            'input[type="checkbox"][name]'
+        );
+        // If showAllBox is unchecked, all boxes need to be unchecked.
+        // Else, check them all, if not already checked.
+        if (!showAllBox.checked) {
+            for (c of checkboxesWithName) {
+                c.checked = false;
+                // Make sure the star sign is updated.
+                c.dispatchEvent(new Event("change"));
+            }
+        } else {
+            for (c of checkboxesWithName) {
+                if (!c.checked) {
+                    c.checked = true;
+                    // Make sure the star sign is updated.
+                    c.dispatchEvent(new Event("change"));
+                }
+            }
+        }
     }
 }
