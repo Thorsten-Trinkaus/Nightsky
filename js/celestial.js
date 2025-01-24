@@ -892,7 +892,8 @@ class BackgroundStar extends CelestialBody {
         setInfoText(
             "STAR\r\n" + 
             getInfoText() + 
-            "\r\nmiddle mouse button on 2 stars to connect them "
+            "\r\nmiddle mouse button on 2 stars to connect them " +
+            "\nP to swap star system"
         );
         vec3.scale(this.scale, this.scale, 4);
     }
