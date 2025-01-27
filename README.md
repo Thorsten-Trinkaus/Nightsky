@@ -14,8 +14,8 @@ This project takes advantage of the third data release to create a browser-based
 
 The visualization is not limited to the Gaia dataset. It also displays the star signs visible from Earth and allows users to draw, export and share their own star sign designs.
 
-![scene](./report/example1.png)
-![starsigns](./report/example2.png)
+![scene](./report/example1.png?)
+![starsigns](./report/example2.png?)
 
 ---
 
