@@ -1,0 +1,15 @@
+{
+  "name": "nightsky",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node start.js"
+  },
+  "dependencies": {
+    "get-port": "^7.1.0",
+    "http-server": "^14.1.1",
+    "open": "^10.1.0",
+    "path": "^0.12.7",
+    "url": "^0.11.4"
+  }
+}
