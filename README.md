@@ -37,7 +37,7 @@ There are two ways to access Nightsky:
 git clone https://github.com/Thorsten-Trinkaus/Nightsky.git
 ```
 ```
-cd Nightsky
+cd Nightsky/localhost
 ```
 ```
 npm install
