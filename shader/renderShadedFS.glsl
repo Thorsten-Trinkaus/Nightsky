@@ -13,7 +13,7 @@ varying vec3 vertCoord;     // Vertex position in world space.
 
 /* Uniforms */
 uniform int enableTexture;          // Should a texture be used?
-uniform sampler2D texture;          // The texture, if needed.
+uniform sampler2D uTexture;          // The texture, if needed.
 uniform float kAmb;                 // Ambient reflection coefficient.
 uniform float kDif;                 // Diffuse reflection coefficient.
 uniform float kSpe;                 // Specular reflection coefficent.
@@ -80,7 +80,7 @@ void main() {
         // object.
         if (enableTexture == 1) {
             // Get the texture color at the given coordinates.
-            vec4 texColor = texture2D(texture, vertTexCoord);
+            vec4 texColor = texture2D(uTexture, vertTexCoord);
             gl_FragColor = (
                 vec4((kAmb * (0.5 * texColor.rgb + 0.5 * ambColor) +
                 kDif * lambertian * (0.5 * texColor.rgb + 0.5 * difColor) +
@@ -96,7 +96,7 @@ void main() {
         // of the object.
         if (enableTexture == 1) {
             // Get the texture color at the given coordinates.
-            vec4 texColor = texture2D(texture, vertTexCoord);
+            vec4 texColor = texture2D(uTexture, vertTexCoord);
             gl_FragColor = vec4(kAmb * (0.5 * texColor.rgb + 0.5 * ambColor), alpha);
         } else {
             gl_FragColor = vec4(kAmb * ambColor, alpha);

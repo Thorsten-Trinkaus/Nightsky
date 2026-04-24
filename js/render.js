@@ -698,7 +698,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         const mWorld = gl.getUniformLocation(renderSolidProgram, "mWorld");
         const mView = gl.getUniformLocation(renderSolidProgram, "mView");
         const mProj = gl.getUniformLocation(renderSolidProgram, "mProj");
-        const texture = gl.getUniformLocation(renderSolidProgram, "texture");
+        const texture = gl.getUniformLocation(renderSolidProgram, "uTexture");
         const enableTex = gl.getUniformLocation(
             renderSolidProgram, "enableTexture"
         );
@@ -814,7 +814,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         const mNormal = gl.getUniformLocation(renderShadedProgram, "mNormal");
         const mView = gl.getUniformLocation(renderShadedProgram, "mView");
         const mProj = gl.getUniformLocation(renderShadedProgram, "mProj");
-        const texture = gl.getUniformLocation(renderShadedProgram, "texture");
+        const texture = gl.getUniformLocation(renderShadedProgram, "uTexture");
         const enableTex = gl.getUniformLocation(
             renderShadedProgram, "enableTexture"
         );
@@ -837,6 +837,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         const shadMap = gl.getUniformLocation(
             renderShadedProgram,"lightShadowMap"
         );
+
         const shadClip = gl.getUniformLocation(
             renderShadedProgram, "shadowClip"
         );
@@ -876,6 +877,7 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
         // The texture itself will be loaded for each Object separately.
         gl.activeTexture(gl.TEXTURE1);
         gl.uniform1i(texture, 1);
+
         // The specular color of the objects depend on the light source and
         // there only is one.
         gl.uniform3fv(speColor, objectsToRender[0].ambColor);
@@ -1019,6 +1021,28 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             renderShadedVS, renderShadedFS, 
             vs4, fs4
         );
+
+        // Init sampler uniforms.
+        initSamplerUniforms(
+            renderShadedProgram, 
+            ["lightShadowMap", "uTexture"], 
+            [0, 1]
+        );
+        initSamplerUniforms(
+            renderSolidProgram, 
+            ["uTexture"], 
+            [0]
+        );
+
+        // Validate each program.
+        for (const program of [
+            selectProgram, 
+            shadowGenProgram, 
+            renderSolidProgram, 
+            renderShadedProgram
+        ]) {
+            validateProgram(program);
+        }
     }
 
     /**
@@ -1074,6 +1098,36 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             return;
         }
         
+        // Validation was moved to its own function, as sampler uniforms are not
+        // assigned here and Chrome-based browsers reject programs that are only
+        // valid after initialization.
+
+        // Return the new program.
+	    return program;
+    }
+
+    /**
+     * Helper function to initialize sampler uniforms of a program. This needs
+     * to be called after loading the program and before validating it!
+     * @param {!WebGLProgram} program - the program
+     * @param {!string[]} uniformNames - the names of the sampler uniforms
+     * @param {!number[]} textureUnits - the texture units. For obvious reasons,
+     * the length of this list needs to be the same as the length of uniformNames!
+     */
+    function initSamplerUniforms(program, uniformNames, textureUnits) {
+        gl.useProgram(program);
+        for (let i = 0; i < uniformNames.length; i++) {
+            const location = gl.getUniformLocation(program, uniformNames[i]);
+            gl.uniform1i(location, textureUnits[i]);
+        }
+    }
+
+    /**
+     * Helper function to validate a WebGL program.
+     * @param {!WebGLProgram} program - the program to validate
+     * @returns {void}
+     */
+    function validateProgram(program) {
         // Validate the program.
         gl.validateProgram(program);
         // Catch any error.
@@ -1084,9 +1138,6 @@ const { vec2, vec3, vec4, mat3, mat4, quat} = glMatrix;
             );
             return;
         }
-
-        // Return the new program.
-	    return program;
     }
     
     /**
